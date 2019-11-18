@@ -583,7 +583,7 @@ function openskydora_ir_citationCModel_islandora_view_object_alter (&$object, &$
         $default_viewer = variable_get('islandora_scholar_viewers');
         $default_viewer = $default_viewer['default'];
 
-        $default_viewer = 'none';  // hard-coded here because I can't find a way to configure so it is 'none'!
+        // $default_viewer = 'none';  // hard-coded here because I can't find a way to configure so it is 'none'!
 
         if (isset($object['PDF']) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object['PDF']) && $default_viewer == 'none') {
             $filename = str_replace(":", "_", $object->id);
