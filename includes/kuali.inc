@@ -136,7 +136,30 @@ function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART
  * returns kauli response for proviced $award_id as object or array
  */
 function get_kuali_response($award_id) {
+<<<<<<< HEAD
     $base_url = 'https://www.fin.ucar.edu/kualiapi/awardsbysponsorawardid';
+=======
+
+    $skip_award_ids = array(
+        'DEAC0576RL01830',
+
+        'N999999',
+        'CC999999',
+        '0856145',
+        'AGS0856145',
+        'ATM0753581M0856145',
+        'M0856145',
+        'DTFAWA15D00036',
+        '1755088',
+    );
+    // we do not provide kuali info for skipped award ids                                                                    
+    if (in_array (strtoupper($award_id), $skip_award_ids)) {
+        return null;
+    }
+
+
+    $base_url = 'http://fatomcat-test.fin.ucar.edu:8081/kualiapi/awardsbysponsorawardid';
+>>>>>>> 7963e0e7b0bb747bfe82261412f929163e254797
     $username = 'openskykcapi';
     $password = 'W!n+er5now#';
 
@@ -154,7 +177,7 @@ function get_kuali_response($award_id) {
     $response = json_decode($resp, true);
 
 //    print json_encode($response, JSON_PRETTY_PRINT);
-
+0
     return $response;
 
 }
