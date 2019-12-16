@@ -26,7 +26,7 @@ function sanitize_id ($raw) {
  * @return the kuali award_id that was matched, or null if there is no match
  */
 function get_kuali_award_id ($award_id, $match_criterion="SMART_PARTIAL") {
-    print "get_kuali_award_id: $award_id\n";
+    // print "get_kuali_award_id: $award_id\n";
     $info = get_kuali_award_info ($award_id, $match_criterion);
     if (!$info) {
         print "no info\n";
@@ -136,12 +136,9 @@ function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART
  * returns kauli response for proviced $award_id as object or array
  */
 function get_kuali_response($award_id) {
-
-    $base_url = 'http://fatomcat-test.fin.ucar.edu:8081/kualiapi/awardsbysponsorawardid';
+    $base_url = 'https://www.fin.ucar.edu/kualiapi/awardsbysponsorawardid';
     $username = 'openskykcapi';
     $password = 'W!n+er5now#';
-
-//    $auth_string = 'Basic ' . base64_encode("$username:$password");
 
     $ch = curl_init();
     $options = array(
