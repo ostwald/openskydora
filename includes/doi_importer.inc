@@ -569,10 +569,12 @@ function openskydora_translator_post_processor ($doi, $mods, $crossref) {
     */    
 
     $wos_dom = openskydora_get_wos_dom ($doi);
-    $wos_data = openskydora_get_wos_data ($wos_dom);
-
-    // insert ABSTRACT into MODS
-    add_wos_abstract_to_mods ($mods, $wos_data['abstract']);
+    $wos_data = null;
+    if ($wos_dom) {
+        $wos_data = openskydora_get_wos_data ($wos_dom);
+        // insert ABSTRACT into MODS
+        add_wos_abstract_to_mods ($mods, $wos_data['abstract']);
+    }
 
     // get crossref award ids
     $crossref_award_ids = array();
@@ -591,7 +593,11 @@ function openskydora_translator_post_processor ($doi, $mods, $crossref) {
         }
     }
 
-    $merged_award_ids = merge_award_ids($crossref_award_ids, $wos_data['award_ids']);
+    if ($wos_data) {
+        $merged_award_ids = merge_award_ids($crossref_award_ids, $wos_data['award_ids']);
+    } else {
+        $merged_award_ids = $crossref_award_ids;
+    }
 
     $validated_award_ids = array();
     foreach ($merged_award_ids as $award_id) {
