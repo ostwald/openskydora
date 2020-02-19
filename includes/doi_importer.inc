@@ -405,7 +405,7 @@ function openskydora_crossref_translator ($crossref_data) {
                                                 // assign $doi so we can use it
                                                 // in post processor
                                                 $doi = $doi_text->nodeValue;
-                                                dpm ('doi: ' . $doi);
+                                                //dpm ('doi: ' . $doi);
                                             }
                                             break;
 
@@ -562,54 +562,19 @@ function openskydora_crossref_translator ($crossref_data) {
  * @param $crossref - a DOMDocument
  */
 function openskydora_translator_post_processor ($doi, $mods, $crossref) {
-    dpm ('openskydora_translator_post_processor');
-
     /*
-
-     WTF??? I could never extract the DOI from the $mods DOMDocument. 
+     Note:  I could never extract the DOI from the $mods DOMDocument. 
      No idea why. Finally i just passed as param. (but i didn't want
      to because I wanted to set this up as an alter ...)
-    
-    dpm ('mods is a '. get_class($mods));
-    // get the doi from the crossref dom
-    $xpath = new DOMXpath($mods);
-    $xpath->registerNamespace("ns", $mods->documentElement->namespaceURI);
-    $nodes = $xpath->query("//ns:identifier[@type='doi']");
-
-    dpm ('FOUND '. $nodes->length . ' nodes');
-
-    if (empty($nodes) || $nodes->length == 0) {
-        dpm( 'DOI not found in MODS');
-        error_log( 'DOI not found in MODS');
-        return;
-    }
-
-    $mods_doi_node = $nodes->item(0);
-    if ($mods_doi_node) {
-        dpm ('mods_doi_node');
-        dpm ($mods_doi_node->saveXML());
-        if ($doi) {
-            $doi = $mods_doi_node->nodeValue;
-            error_dpm ("DOI: $doi\n");
-        } else {
-            dpm ("DOI NOT FOUND");
-            return;
-        }
-    }
-    else {
-        dpm ("never found node - BAILING");
-        return;
-    }
-    */
+    */    
 
     $wos_dom = openskydora_get_wos_dom ($doi);
-    dpm ('wos_dom');
-    dpm ($wos_dom);
-
-    $wos_data = openskydora_get_wos_data ($wos_dom);
-
-    // insert ABSTRACT into MODS
-    add_wos_abstract_to_mods ($mods, $wos_data['abstract']);
+    $wos_data = null;
+    if ($wos_dom) {
+        $wos_data = openskydora_get_wos_data ($wos_dom);
+        // insert ABSTRACT into MODS
+        add_wos_abstract_to_mods ($mods, $wos_data['abstract']);
+    }
 
     // get crossref award ids
     $crossref_award_ids = array();
@@ -628,7 +593,11 @@ function openskydora_translator_post_processor ($doi, $mods, $crossref) {
         }
     }
 
-    $merged_award_ids = merge_award_ids($crossref_award_ids, $wos_data['award_ids']);
+    if ($wos_data) {
+        $merged_award_ids = merge_award_ids($crossref_award_ids, $wos_data['award_ids']);
+    } else {
+        $merged_award_ids = $crossref_award_ids;
+    }
 
     $validated_award_ids = array();
     foreach ($merged_award_ids as $award_id) {
