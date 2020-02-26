@@ -42,9 +42,9 @@ function get_mods_as_if_from_crossref() {
 }
 
 
-function kuali_tester() {
+function kuali_tester($award_id) {
 //    $award_id = 'FA9550-16-1-0050x';
-    $award_id = 'FA9550-16-1-0050';
+
 //    $award_id = '0050';
     $ret = get_kuali_response($award_id);
     echo "\nget_kuali_response returned an ".gettype($ret) . "\n";
@@ -84,5 +84,6 @@ function WOI_funder_info_tester() {
     print_funder_info ($funders);
 }
 
-//kuali_tester();
- translator_post_process_tester();
+$award_id = 'FA9550-16-1-0050';
+// kuali_tester($award_id);
+//  translator_post_process_tester();
