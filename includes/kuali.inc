@@ -26,21 +26,17 @@ function sanitize_id ($raw) {
  * @return the kuali award_id that was matched, or null if there is no match
  */
 function get_kuali_award_id ($award_id, $match_criterion="SMART_PARTIAL") {
-    // print "get_kuali_award_id: $award_id\n";
     $info = get_kuali_award_info ($award_id, $match_criterion);
     if (!$info) {
-        print "no info\n";
         return null;
     }
 
     $fields_to_check = array ('sponsorAwardId', 'fainId');
     forEach ($fields_to_check as $field) {
-        print "- $info[$field]\n";
         if (endswith(sanitize_id($info[$field]), sanitize_id($award_id))) {
             return $info[$field];
         }
     }
-    print "never found\n";
     return null;
 }
 
@@ -115,7 +111,7 @@ function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART
             }
 
             if (endsWith($kuali_award_id, $sought_award_id)) {
-                print "$award_id - partial match with $field field\n";
+                watchdog('doi_importer', "$award_id - partial match with $field field");
                 return $result;
             }
         }
@@ -171,9 +167,7 @@ function get_kuali_response($award_id) {
 
     $response = json_decode($resp, true);
 
-//    print json_encode($response, JSON_PRETTY_PRINT);
-
-    return $response;
+   return $response;
 
 }
 
