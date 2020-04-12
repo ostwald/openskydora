@@ -4,11 +4,18 @@
  * e.g., https://osstage2cl.dls.ucar.edu/islandora/object/technotes:546
  */
 function openskydora_get_pid_from_request () {
+
+    // we used to restrict to object pages, but now we'd like this to
+    // also work with embargo pages (openskydora/embargo)
+    /*
     $pat = 'islandora/object';
 
     if (substr (request_path(), 0, strlen($pat)) != $pat) {
         return null;
     }
+    */
+
+
     $path_parts = explode('/', request_path());
     $tail = array_pop($path_parts);
     $parts = explode (':', $tail);
@@ -224,9 +231,9 @@ function openskydora_get_pid_subcollection_infos ($parent_pid) {
  * @return array
  */
 function openskydora_get_collection_tree () {
-    $pid = 'opensky:root';
+    $base_pid = 'islandora:root';
     $tree = array();
-    foreach (openskydora_get_subcollections_recursive('opensky:root') as $pid) {
+    foreach (openskydora_get_subcollections_recursive($base_pid) as $pid) {
         $tree[$pid] = openskydora_get_pid_subcollections_pids($pid);
     }
     return $tree;
@@ -256,7 +263,6 @@ Called in islandora_sulution_pack_collection/theme/theme.inc to redirect
 collections to search view
 */
 function openskydora_redirect_to_search_view ($pid) {
-    // dsm('openskydora_redirect_to_search_view redirecting to search: '. $pid);
     $options = array('query' => array(
         'type'=>'dismax',
         'collection'=>$pid
@@ -270,11 +276,8 @@ function openskydora_redirect_to_search_view ($pid) {
  * and thus avoid PHP Out of memory errors 
  */
 function openskydora_islandora_solr_query($islandora_solr_query) {
-    //    dpm ('openskydora_islandora_solr_query');
-    //    dpm ($islandora_solr_query);
 
     $islandora_solr_query->solrParams['fl'] = 'PID,mods*,fgs*,dc.*,dsmd_DC*,keyDate*,RELS_EXT*,*Display*,fedora_datastreams_ms';
-
 }
 
 /**
@@ -283,7 +286,6 @@ function openskydora_islandora_solr_query($islandora_solr_query) {
  * collection and it's subcollections if any exist
  */
 function openskydora_islandora_solr_query_alter($qp) {
-    // dsm('openskydora_islandora_solr_query_alter');
 
     // if sort is not set for search pages, then set it to keyDate desc
     if (current_path() == ISLANDORA_SOLR_SEARCH_PATH  && !isset($qp->solrParams['sort'])) {
@@ -319,7 +321,6 @@ function openskydora_islandora_solr_query_alter($qp) {
         $searchable_collection_clause = implode(' OR ', $children_params);
 
         $qp->solrParams['fq'] = array_merge($fq_new, array($searchable_collection_clause));
-        // dsm($qp->solrParams);
     }
 }
 
@@ -333,7 +334,8 @@ function openskydora_islandora_solr_results_alter(&$object_results, $query_proce
 
     $default_path = drupal_get_path('module', 'islandora_solr') . '/images/defaultimg.png';
     foreach ($object_results as $object_index => $object_result) {
-        if (isset ($object_results[$object_index]['thumbnail_url']) && $object_results[$object_index]['thumbnail_url'] == $default_path) {
+        if (isset ($object_results[$object_index]['thumbnail_url']) && $object_results[$object_index]['thumbnail_url'] == $default_path &&
+            isset ($object_results[$object_index]['content_models'])) {
             if (strpos($object_results[$object_index]['content_models'][0], 'citationCModel') !== false) {
                 $object_results[$object_index]['thumbnail_url'] = drupal_get_path('module', 'openskydora') . '/images/BiblioCitOnly.png';
             }
@@ -374,17 +376,14 @@ function openskydora_islandora_breadcrumbs_alter(&$data, $context) {
     // array_splice ($data, 1, 0, $parent_breadcrumb);
 }
 
+
+
 function get_parent_for_pid ($pid) {
     $obj = openskydora_get_fedora_object($pid);
     module_load_include('inc', 'islandora', 'includes/metadata');
-    if (function_exists ('islandora_get_parents_from_rels_ext')) {
-        error_log ('islandora_get_parents_from_rels_ext exists');
-    }
+    module_load_include('inc', 'islandora', 'includes/utilities');
     $parent_collections = islandora_get_parents_from_rels_ext ($obj);    
-    dpm ('parent collections');
-    dpm ($parent_collections);
     $parent = $parent_collections[0];
-    dpm ($parent->label . ' ('. $parent->id .')');
 
     $query = array ('type' => 'dismax',
                     'collection' => $parent->id,
@@ -396,8 +395,6 @@ function get_parent_for_pid ($pid) {
     );
 
     $breadcrumb = '<a' . drupal_attributes($attr) . '>' . check_plain($parent->label) . '</a>';
-
-    dpm ('crumb: ' . $breadcrumb);
     return $breadcrumb;
 }
 
@@ -452,6 +449,7 @@ function openskydora_collection_breadcrumb($params) {
 Called from islandora_scholar_get_metadata_display(in islandora_scholar/includes/utilities.inc)
  */
 function openskydora_get_in_collections_display ($object) {
+    module_load_include('inc', 'islandora', 'includes/utilities');
     $parent_collections = islandora_get_parents_from_rels_ext($object);
     return theme('openskydora_in_collections', array(
         'parent_collections' => $parent_collections));
@@ -582,9 +580,7 @@ function openskydora_ir_citationCModel_islandora_view_object_alter (&$object, &$
         
         $default_viewer = variable_get('islandora_scholar_viewers');
         $default_viewer = $default_viewer['default'];
-
-        // $default_viewer = 'none';  // hard-coded here because I can't find a way to configure so it is 'none'!
-
+        
         if (isset($object['PDF']) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object['PDF']) && $default_viewer == 'none') {
             $filename = str_replace(":", "_", $object->id);
             $rendered['citation.tab']['pdf_download'] = array(
@@ -629,7 +625,6 @@ function openskydora_form_islandora_scholar_modify_form_alter (array &$form, arr
     // grab object from form_state
     $object = $form_state['build_info']['args'][0];
     $pid = $object->id;
-    //    dpm ("pid: $pid");
     
     // get the version from the openskydora-specific location in the MODS stream
     $mods_str = trim($object['MODS']->content);
@@ -769,10 +764,12 @@ function openskydora_add_usage_and_version_elements_to_mods (AbstractObject $obj
  * - 'PDF'
  * - 'OBJ'
  * - 'PROXY_MP3'
+
+these options are displayed only if a datastream with this ID is
+present in current object.
+
  */
 function openskydora_form_islandora_scholar_embargo_form_alter (&$form, &$form_state, $form_id) {
-    //    dpm ('openskydora_form_islandora_scholar_embargo_form_alter');
-
     $options = array(
         'object' => t('Object-level embargo'),
         'datastream' => t('Datastream'),
@@ -799,9 +796,6 @@ function openskydora_form_islandora_scholar_embargo_form_alter (&$form, &$form_s
 
     // replace submit function with openskydora version
     $form['#submit'] = array('openskydora_embargo_form_submit');
-
-    // dpm ($form);
-
 }
 
 /**
@@ -810,7 +804,7 @@ function openskydora_form_islandora_scholar_embargo_form_alter (&$form, &$form_s
  * function here and modify it, thus replacing it with openskydora_embargo_form_submit
  */
 function openskydora_embargo_form_submit (array $form, array &$form_state) {
-    //    dpm ('openskydora_embargo_form_submit');
+
     $embargoed = !empty($form_state['islandora_embargo']);
     $pid = $form_state['values']['pid'];
     $object = islandora_object_load($pid);
@@ -936,8 +930,6 @@ function openskydora_embargo_form_submit (array $form, array &$form_state) {
 }
 // ------- openseadragon
 function openskydora_template_process_islandora_openseadragon_viewer (array &$variables) {
-    //    dpm ('openskydora_template_process_islandora_openseadragon_viewer');
-    // dpm ($variables);
 
     $library_path = libraries_get_path('openseadragon');
     $openseadragon_module_path = drupal_get_path('module', 'islandora_openseadragon');
@@ -955,4 +947,65 @@ function openskydora_template_process_islandora_openseadragon_viewer (array &$va
     }
     drupal_add_js("$openseadragon_module_path/js/islandora_openseadragon.js", array('weight' => -2));
     drupal_add_css("$openseadragon_module_path/css/islandora_openseadragon.theme.css");
+}
+
+/* ------------- IP embargo
+ * Implements hook_islandora_object_access().
+we're trying to add the object's PID to the url so the embargo_message
+can have just a little context
+*/
+function openskydora_islandora_object_access($op, $islandora_object, $user) {
+  module_load_include('inc', 'islandora_ip_embargo', 'includes/utilities');
+
+  // Handle an embargo.
+  if (islandora_ip_embargo_restrict_access($islandora_object->id) && !user_access(ISLANDORA_IP_EMBARGO_MANAGE_EMBARGOES)) {
+    // If there is a redirect configured then use it. If not let Drupal do it.
+    $redirect_url = variable_get('islandora_ip_embargo_embargoed_redirect', '');
+    if ($redirect_url) {
+      if (strpos(current_path(), "islandora/object/{$islandora_object->id}") !== FALSE && strpos(current_path(), '/datastream/TN') === FALSE) {
+	if (variable_get('islandora_ip_embargo_embargoed_redirect_append_url', 0)) {
+          global $base_url;
+          $redirect_target = $redirect_url . '/' . $islandora_object->id;
+          //drupal_set_message (" - redirecting to redirect_TARGET: $redirect_target");
+          drupal_goto($redirect_target);
+	}
+        else {
+          drupal_goto($redirect_url);
+	}
+      }
+      else {
+          return FALSE;
+      }
+    }
+    else {
+      return FALSE;
+    }
+  }
+}
+
+/**
+Alter the prompts on the IP embargo config. we are appending the
+objects PID to the url, NOT the object's whole URL
+*/
+function openskydora_form_islandora_ip_embargo_settings_form_alter(array &$form, array &$form_state) {
+    $form['islandora_ip_embargo_embargoed_redirect_append_url']['#title'] = 'Append embargoed object\'s PID';
+    $form['islandora_ip_embargo_embargoed_redirect_append_url']['#description'] = 'Check this option if you want to append the embargoed object\'s URL';
+}
+
+/**
+   Implements hook_module_implments_alter
+   - ensures that the openskydora version of the
+   islandora_object_access hook is called.
+*/ 
+function openskydora_module_implements_alter(&$implementations, $hook) {
+
+  if ($hook != 'islandora_object_access') {
+    return;
+  }
+
+  // drupal_set_message ("openskydora_module_implements_alter: hook: $hook");
+  $module = 'openskydora';
+  $group = array($module => $implementations[$module]);
+  unset($implementations[$module]);
+  $implementations = $group + $implementations;
 }

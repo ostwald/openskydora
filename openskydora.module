@@ -21,6 +21,17 @@ function openskydora_menu () {
         'access callback' => TRUE,
         'expanded' => TRUE,
     );
+    
+    $items['openskydora/embargo'] = array(
+        'title' => '', # Embargo Messenger',
+        'page callback' => 'openskydora_embargo_messenger',
+          'page arguments' => array(
+              2,
+          ),
+        'access callback' => TRUE,
+        'expanded' => TRUE,
+    );
+    
     return $items;
 }
 
@@ -71,6 +82,13 @@ function openskydora_theme() {
             'file' => $file,
             'template' => 'openskydora-scratch',
             'variables' => array ('pid' => null),
+        ),
+        'openskydora_embargo_messenger' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'openskydora-embargo-messenger',
+            'variables' => array (
+            ),
         ),
         'openskydora_search_collection_info' => array (
             'path' => $path . '/theme',
@@ -142,8 +160,21 @@ function openskydora_help($path, $arg) {
  */
 function openskydora_scratch() {
 
-    $defaultpid = 'archives:hao';
-    $pid = isset($_GET['pid']) ? $_GET['pid'] : $default_pid;
+    $defaultpid = 'islandora:root';
+    if (isset($_GET['pid']) && $_GET['pid'] != NULL) {
+        $pid = $_GET['pid'];
+    } else {
+        $pid = $defaultpid;
+    }
+    // $pid = isset($_GET['pid']) && $_GET['pid'] != NULL ? $_GET['pid'] : $default_pid;
 
     return theme('openskydora_scratch', array('pid' => $pid));
+}
+
+/**
+ * Provide content for the openskydora/scratch page (via openskydora_scratch theme)
+ */
+function openskydora_embargo_messenger ($pid) {
+    drupal_set_message ("Pid: $pid");
+    return theme('openskydora_embargo_messenger', array('pid' => $pid));
 }
