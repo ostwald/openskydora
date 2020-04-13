@@ -26,7 +26,6 @@ function template_preprocess_openskydora_scratch(&$variables) {
  * search results.
  */
 function template_preprocess_openskydora_basic_collection_wrapper(&$variables) {
-
     $islandora_object = $variables['islandora_object'];
 
     /* 
@@ -53,8 +52,6 @@ function template_preprocess_openskydora_basic_collection_wrapper(&$variables) {
 function template_preprocess_openskydora_embargo_messenger(&$variables) {
 
     module_load_include('inc', 'islandora', 'includes/utilities');
-    //dsm($variables);
-    // $pid = openskydora_get_pid_from_request();
 
     $pid = $variables['pid'];
     $object = openskydora_get_fedora_object($pid);
@@ -67,27 +64,27 @@ function template_preprocess_openskydora_embargo_messenger(&$variables) {
         $variables['parent_collections'] = array ();
     }
 
-    drupal_set_message ('parent: ' . $variables['parent_collections'][0]);
-
+    // associate a collection pid with the name of the embargo message page
     $embargo_msgs = array(
-        //        'islandora:jonscollection' => 'default',
-        'islandora:video_collection' => 'video'
+        'archives:ucarawards' => 'ucarawards',
     );
         
     foreach ($embargo_msgs as $pid => $name) {
-        if (in_array('islandora:video_collection', $variables['parent_collections'])) {
+        if (in_array($pid, $variables['parent_collections'])) {
             $options = array('query' => array ('pid' => $pid,));
             $goto = "embargo/$name";
             drupal_goto ($goto, $options);
             return;
         }
     }
-    
-    if (!in_array('islandora:jonscollection', $variables['parent_collections'])) {
-        $options = array('query' => array ('pid' => $pid,1));
-        $goto = "embargo/default";
-        drupal_set_message ("GOTO $goto");
-        drupal_goto ($goto, $options);
-    }
-    
+
+    // if we're still here, that means we haven't found a
+    // collection-specific embarbo page. recirect to the default
+    // embargo message.
+   
+    $options = array('query' => array ('pid' => $pid,1));
+    $goto = "embargo/default";
+    // drupal_set_message ("GOTO $goto");
+    drupal_goto ($goto, $options);
+   
 }

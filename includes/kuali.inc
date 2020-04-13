@@ -144,7 +144,6 @@ function get_kuali_response($award_id) {
         'M0856145',
         'DTFAWA15D00036',
         '1755088',
-        '1852977',
     );
     // we do not provide kuali info for skipped award ids                                                                    
     if (in_array (strtoupper($award_id), $skip_award_ids)) {

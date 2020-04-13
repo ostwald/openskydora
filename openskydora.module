@@ -160,7 +160,7 @@ function openskydora_help($path, $arg) {
  */
 function openskydora_scratch() {
 
-    $defaultpid = 'islandora:root';
+    $defaultpid = 'opensky:root';
     if (isset($_GET['pid']) && $_GET['pid'] != NULL) {
         $pid = $_GET['pid'];
     } else {
@@ -175,6 +175,6 @@ function openskydora_scratch() {
  * Provide content for the openskydora/scratch page (via openskydora_scratch theme)
  */
 function openskydora_embargo_messenger ($pid) {
-    drupal_set_message ("Pid: $pid");
+    // drupal_set_message ("Pid: $pid");
     return theme('openskydora_embargo_messenger', array('pid' => $pid));
 }
