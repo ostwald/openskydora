@@ -35,9 +35,14 @@ function template_preprocess_openskydora_basic_collection_wrapper(&$variables) {
         return false;
     }
     */
-    
+
     module_load_include('inc', 'openskydora', 'includes/utilities');
     if (!openskydora_has_subcollections($islandora_object->id)) {
+        // we don't want to redirect if there is more to the url
+        // e.g., /islandora/objects/islandora%3Ajonscollection/datastream/TN/view
+
+        //dsm ("redirecting to search view");
+        //dsm( current_path());
         openskydora_redirect_to_search_view($islandora_object->id);
         return;
     }

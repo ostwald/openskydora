@@ -7,6 +7,7 @@ require_once dirname(__FILE__) . '/includes/doi_importer.inc';
 require_once dirname(__FILE__) . '/includes/wos.inc';
 require_once dirname(__FILE__) . '/includes/kuali.inc';
 require_once dirname(__FILE__) . '/includes/citeproc_converter.inc';
+require_once dirname(__FILE__) . '/includes/breadcrumbs.inc';
 
 module_load_include('inc', 'openskydora', 'theme/theme');
 
@@ -50,11 +51,11 @@ function openskydora_theme_registry_alter(&$theme_registry) {
         }        
     }
     // islandora_openseadragon
-    if (!empty($theme_registry['islandora_openseadragon_clipper'])) {
+    if (isset($theme_registry['islandora_openseadragon_clipper']) && !empty($theme_registry['islandora_openseadragon_clipper'])) {
         unset ($theme_registry['islandora_openseadragon_clipper']);
         //        dpm ('islandora_openseadragon_clipper unset');
     } 
-    if (!empty($theme_registry['islandora_openseadragon_viewer'])) {
+    if (isset($theme_registry['islandora_openseadragon_viewer']) && !empty($theme_registry['islandora_openseadragon_viewer'])) {
 
         // Replace "template_process_islandora_openseadragon_viewer" with
         // 'openskydora_template_process_islandora_openseadragon_viewer' so we can
@@ -160,7 +161,7 @@ function openskydora_help($path, $arg) {
  */
 function openskydora_scratch() {
 
-    $defaultpid = 'islandora:root';
+    $defaultpid = variable_get('islandora_repository_pid');
     if (isset($_GET['pid']) && $_GET['pid'] != NULL) {
         $pid = $_GET['pid'];
     } else {

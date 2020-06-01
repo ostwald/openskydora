@@ -231,7 +231,7 @@ function openskydora_get_pid_subcollection_infos ($parent_pid) {
  * @return array
  */
 function openskydora_get_collection_tree () {
-    $base_pid = 'islandora:root';
+    $base_pid = variable_get('islandora_repository_pid');
     $tree = array();
     foreach (openskydora_get_subcollections_recursive($base_pid) as $pid) {
         $tree[$pid] = openskydora_get_pid_subcollections_pids($pid);
@@ -343,106 +343,6 @@ function openskydora_islandora_solr_results_alter(&$object_results, $query_proce
     }
 }
 
-/**
- * hook to insert the collection link and x_link into the breadcrumbs (see
- * islandora_solr_search/includes/results->setBreadcrumbs()
-
-For whatever evil reason, openskydora_islandora_breadcrumbs_alter gets called
-TWICE. Therefore, we have to detect when we're called the second time and
-politely refuse to do anything .....
- */
-function openskydora_islandora_breadcrumbs_alter(&$data, $context) {
-
-    // only make change if there is a collection param
-    if (!isset($_GET['collection'])) {
-        return;
-    }
-    $collection = $_GET['collection'];
-
-    // Look for the collection_breadcrumb - it has a "collection-crumb" class so
-    // we just look for that string
-    foreach ($data as $crumb) {
-        if (strpos($crumb, 'collection-crumb') !== false) {
-            // our work is done - we've already added the collection breadcrumb
-            return;
-        }
-    }
-
-    // make breadcrumb and splice it into existing breadcrums
-    $collection_breadcrumb = openskydora_collection_breadcrumb($_GET);
-    array_splice ($data, 1, 0, $collection_breadcrumb);
-
-    //    $parent_breadcrumb = get_parent_for_pid ($collection);
-    // array_splice ($data, 1, 0, $parent_breadcrumb);
-}
-
-
-
-function get_parent_for_pid ($pid) {
-    $obj = openskydora_get_fedora_object($pid);
-    module_load_include('inc', 'islandora', 'includes/metadata');
-    module_load_include('inc', 'islandora', 'includes/utilities');
-    $parent_collections = islandora_get_parents_from_rels_ext ($obj);    
-    $parent = $parent_collections[0];
-
-    $query = array ('type' => 'dismax',
-                    'collection' => $parent->id,
-    );
-
-    $attr = array (
-        'href' => url(current_path(), array('query' => $query)),
-        'class' => 'collection-crumb'
-    );
-
-    $breadcrumb = '<a' . drupal_attributes($attr) . '>' . check_plain($parent->label) . '</a>';
-    return $breadcrumb;
-}
-
-/**
- * creates the collection breadcrumb, which is inserted into
- * breadcrumbs by openskydora_islandora_breadcrumbs_alter
- */
-function openskydora_collection_breadcrumb($params) {
-    $collection = $params['collection'];     
-    $dc_array = openskydora_get_dc_array($collection);
-    $filter_string = $dc_array['dc:title']['value'];
-    
-    // Remove filter array for collection breadcrumb link
-    $query = array();
-    
-    $query_diff = $params;
-    
-    if (isset($query_diff['f'])) {
-        unset($query_diff['f']);
-    }
-    
-    // Set attributes variable.
-    $attr = array();
-    $attr['title'] = $filter_string;
-    $attr['rel'] = 'nofollow';
-    if (isset($exclude) && $exclude) {
-        $attr['class'] = 'strikethrough';
-    }
-    // remove query from path if there is one
-    // $attr['href'] = url(ISLANDORA_SOLR_SEARCH_PATH, array('query' => $query_diff));
-    $attr['href'] = url('/islandora/search', array('query' => $query_diff));
-        
-    // Pull out filter (for x link).
-    $query_x = array();  // query will be like current except it will not have collection param
-    foreach ($params as $key => $value) {
-        if ($key != 'collection' && $value == $collection) $query_x[$key] = $value;
-    }
-
-    $attr_x = array();
-    $attr_x['title'] = t('Remove') . ' ' . $filter_string;
-    $attr_x['rel'] = 'nofollow';
-    $attr_x['href'] = url(current_path(), array('query' => $query_x));
-    
-    $breadcrumb = '<a' . drupal_attributes($attr) . '>' . check_plain($filter_string) . '</a>'
-                . '<span class="islandora-solr-breadcrumb-super collection-crumb"> <a' . drupal_attributes($attr_x) . '>('
-                . t('x') . ')</a></span>';
-    return $breadcrumb;
-}
 
 /**
  * Supply in collections info for islandora_scholar (citation model).
@@ -540,11 +440,19 @@ function openskydora_pdf_upload_form_validate(&$form, &$form_state) {
 //----------------
 // Experimental - this is how we would alter ALL content model views 
 function openskydora_islandora_view_object_alter (&$object, &$rendered) {
-    //    dpm ("VIEW_OBJECT_ALTER");
+    // dpm ("VIEW_OBJECT_ALTER");
     //    dpm ($object->models[0]);
     //    dpm ($rendered);
 
 }
+
+/**
+   implements view_object hook
+*/
+function openskydora_view_object ($object) {
+    dsm ('openskydora_view_object');
+}
+
 
 /**
  * Alter all citationCModel views
