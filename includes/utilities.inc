@@ -864,29 +864,28 @@ can have just a little context
 */
 function openskydora_islandora_object_access($op, $islandora_object, $user) {
   module_load_include('inc', 'islandora_ip_embargo', 'includes/utilities');
-
+  // watchdog ('jlo', 'openskydora_islandora_object_access');
   // Handle an embargo.
   if (islandora_ip_embargo_restrict_access($islandora_object->id) && !user_access(ISLANDORA_IP_EMBARGO_MANAGE_EMBARGOES)) {
     // If there is a redirect configured then use it. If not let Drupal do it.
     $redirect_url = variable_get('islandora_ip_embargo_embargoed_redirect', '');
     if ($redirect_url) {
-      if (strpos(current_path(), "islandora/object/{$islandora_object->id}") !== FALSE && strpos(current_path(), '/datastream/TN') === FALSE) {
-	if (variable_get('islandora_ip_embargo_embargoed_redirect_append_url', 0)) {
-          global $base_url;
-          $redirect_target = $redirect_url . '/' . $islandora_object->id;
-          //drupal_set_message (" - redirecting to redirect_TARGET: $redirect_target");
-          drupal_goto($redirect_target);
-	}
+        if (strpos(current_path(), "islandora/object/{$islandora_object->id}") !== FALSE && strpos(current_path(), '/datastream/TN') === FALSE) {
+            if (variable_get('islandora_ip_embargo_embargoed_redirect_append_url', 0)) {
+                global $base_url;
+                $redirect_target = $redirect_url . '/' . $islandora_object->id;
+                drupal_goto($redirect_target);
+            }
+            else {
+                drupal_goto($redirect_url);
+            }
+        }
         else {
-          drupal_goto($redirect_url);
-	}
-      }
-      else {
-          return FALSE;
-      }
+            return FALSE;
+        }
     }
     else {
-      return FALSE;
+        return FALSE;
     }
   }
 }

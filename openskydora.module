@@ -167,7 +167,6 @@ function openskydora_scratch() {
     } else {
         $pid = $defaultpid;
     }
-    // $pid = isset($_GET['pid']) && $_GET['pid'] != NULL ? $_GET['pid'] : $default_pid;
 
     return theme('openskydora_scratch', array('pid' => $pid));
 }
@@ -176,6 +175,5 @@ function openskydora_scratch() {
  * Provide content for the openskydora/scratch page (via openskydora_scratch theme)
  */
 function openskydora_embargo_messenger ($pid) {
-    drupal_set_message ("Pid: $pid");
     return theme('openskydora_embargo_messenger', array('pid' => $pid));
 }
