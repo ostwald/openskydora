@@ -51,7 +51,7 @@ function openskydora_block_info() {
  */
 function openskydora_block_view($delta = '') {
     $block = array();
-    $pid = openskydora_get_pid_from_request();
+    //    $pid = openskydora_get_pid_from_request();
     switch($delta) {
 
         case 'openskydora_browse_collection':
@@ -82,10 +82,11 @@ function openskydora_block_view($delta = '') {
       case 'openskydora_collection_data':
             $block['subject'] = t('Opensky collection picker data');
             $block['content'] = get_collection_select_options_js();
-  
+            break;
     }
     return $block;
 }
+
 
 /**
  * Generate javascript data for the collections select in simple and advanced search.

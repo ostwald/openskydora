@@ -134,8 +134,8 @@ function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART
 function get_kuali_response($award_id) {
 
     $skip_award_ids = array(
+        /*
         'DEAC0576RL01830',
-
         'N999999',
         'CC999999',
         '0856145',
@@ -145,6 +145,7 @@ function get_kuali_response($award_id) {
         'DTFAWA15D00036',
         '1755088',
         '1852977',
+        */
     );
     // we do not provide kuali info for skipped award ids                                                                    
     if (in_array (strtoupper($award_id), $skip_award_ids)) {
