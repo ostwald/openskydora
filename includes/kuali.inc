@@ -133,20 +133,23 @@ function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART
  */
 function get_kuali_response($award_id) {
 
-    $skip_award_ids = array(
-        /*
-        'DEAC0576RL01830',
-        'N999999',
-        'CC999999',
-        '0856145',
-        'AGS0856145',
-        'ATM0753581M0856145',
-        'M0856145',
-        'DTFAWA15D00036',
-        '1755088',
-        '1852977',
-        */
-    );
+    if (variable_get('islandora_repository_pid') == 'islandora:root') {
+        $skip_award_ids = array();
+    } else {
+        $skip_award_ids = array(
+              'DEAC0576RL01830',
+              'N999999',
+              'CC999999',
+              '0856145',
+              'AGS0856145',
+              'ATM0753581M0856145',
+              'M0856145',
+              'DTFAWA15D00036',
+              '1755088',
+              '1852977',
+        );
+    }
+
     // we do not provide kuali info for skipped award ids                                                                    
     if (in_array (strtoupper($award_id), $skip_award_ids)) {
         return null;
