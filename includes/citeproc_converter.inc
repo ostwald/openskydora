@@ -46,8 +46,37 @@ function openskydora_convert_mods_to_citeproc_jsons_alter(array &$output, Simple
       $output['number'] = openskydora_convert_mods_to_citeproc_json_number($mods);
       $output['number-of-pages'] = convert_mods_to_citeproc_json_query($mods, '//mods:mods[1]/mods:part/mods:extent[@unit="pages"]/mods:total');
       $output['type'] = openskydora_convert_mods_to_citeproc_json_genre($mods);
+
+      // special handling for primary corporate authors
+      $primary_corporate_author = openskydora_get_primary_corporate_author($mods);
+
+      if ($primary_corporate_author) {
+          $output['author'] = $primary_corporate_author;
+      }
   }
 }
+
+/**
+rewrite the json for primary_corporate authors so it can be processed
+downstream (see CiteProc-> csl_name())
+
+takes the first if muliple primary_corporate_authors are found
+
+ */
+function openskydora_get_primary_corporate_author (SimpleXMLElement $mods) {
+
+    $pm_names = $mods->xpath("//mods:name[@type='corporate'][@usage='primary']");
+    
+    if (count($pm_names) > 0) {
+        
+        $namePart = (string)$pm_names[0]->namePart;
+        return array (
+            array (
+                'corporate' => $namePart,
+            ));
+    }
+}
+
 
 /**
  * Gets the page property for the Citation.
