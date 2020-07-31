@@ -10,3 +10,36 @@ ul.scratch {
 	font-size:9pt;
 	color:red;
 }
+
+
+/* islandora-solr facet style mods */
+.date-range-filter-wrapper .form-item-date-filter-date-filter-from {
+    display:inline-block;
+    width:50%;
+}
+.date-range-filter-wrapper .form-item-date-filter-date-filter-to {
+    display:inline-block;
+    width:48%;
+}
+
+.date-range-filter-wrapper .form-item {
+	margin-top:0.3em;
+	margin-bottom:0.3em;
+}
+
+.date-range-filter-wrapper .form-item-date-filter-date-filter-to label{
+    width:2em;
+}
+
+.islandora-solr-facet-wrapper {
+    margin-top:12px;
+}
+
+ul.islandora-solr-facet {
+    margin-bottom:0px;
+    margin-top:5px;
+}
+
+ul.islandora-solr-facet li {
+	line-height:1.3em;
+}
