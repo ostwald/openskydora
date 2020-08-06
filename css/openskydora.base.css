@@ -43,3 +43,22 @@ ul.islandora-solr-facet {
 ul.islandora-solr-facet li {
 	line-height:1.3em;
 }
+
+/* landing page */
+dl.islandora-inline-metadata {
+	/*background:red;*/
+}
+
+dl.islandora-inline-metadata dt {
+	line-height: 21px;
+}
+
+dl.islandora-inline-metadata dd {
+	padding-top:6px;
+	/*background:red;*/
+}
+dl.islandora-inline-metadata dd p {
+	margin-top:0px;
+	margin-bottom:5px;
+	/*background:red;*/
+}
