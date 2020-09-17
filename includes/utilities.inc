@@ -369,9 +369,14 @@ function openskydora_retrieve_doi_markup(AbstractObject $object) {
 
 /**
  * Add "in collection" link to metadata display.
- */
-function openskydora_islandora_scholar_get_metadata_display (&$display, $object, $weight) {
+ * used to be openskydora_islandora_scholar_get_metadata_display? 
 
+ * This functino does not seem to be called.. CAN WE DELETE IT??
+ */
+function openskydora_get_metadata_display (&$display, $object, $weight) {
+
+    dsm ("openskydora_get_metadata_display");
+    
     if (variable_get('islandora_scholar_use_standard_metadata_display', FALSE)) {
         module_load_include('inc', 'islandora', 'includes/metadata');
         // Borrowing core JS for fieldsets.                                                                                              
@@ -379,7 +384,6 @@ function openskydora_islandora_scholar_get_metadata_display (&$display, $object,
         drupal_add_js('misc/collapse.js');
         $metadata = islandora_retrieve_metadata_markup($object);
         $description = islandora_retrieve_description_markup($object);
-        
         $doi_link = openskydora_retrieve_doi_markup($object);
 
         // Insert 'in collections' display element from openskydora

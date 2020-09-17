@@ -38,10 +38,13 @@ function openskydora_menu () {
 
 // Implement hook_theme_registry_alter
 function openskydora_theme_registry_alter(&$theme_registry) {
-    
+
     // islandora_solr_metadata
     if (!empty($theme_registry['islandora_solr_metadata_display'])) {
         $theme_registry['islandora_solr_metadata_display']['template'] = drupal_get_path('module', 'openskydora') . '/theme/openskydora-solr-metadata-display';
+        $theme_registry['islandora_solr_metadata_display']['theme path'] = drupal_get_path('module', 'openskydora');
+        array_splice ($theme_registry['islandora_solr_metadata_display']['process functions'], 2, 0, 'template_process_openskydora_metadata_display');
+        
     }
     // islandora_basic_collection
     if (!empty($theme_registry['islandora_basic_collection_wrapper'])) {

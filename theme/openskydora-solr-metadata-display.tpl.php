@@ -17,7 +17,9 @@
  * @see template_preprocess_islandora_solr_metadata_display()
  * @see template_process_islandora_solr_metadata_display()
  */
-?>
+
+//dsm($variables);
+  ?>
 
 <?php if ($found):
   if (!(empty($solr_fields) && variable_get('islandora_solr_metadata_omit_empty_values', FALSE))):?>
@@ -27,28 +29,37 @@
     <dl xmlns:dcterms="http://purl.org/dc/terms/" class="islandora-inline-metadata islandora-metadata-fields">
       <?php $row_field = 0; ?>
       <?php foreach($solr_fields as $value): ?>
-        <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>">
-          <?php print $value['display_label']; ?>
-        </dt>
-        <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
-          <?php if (!($value['solr_field'] == 'mods_doi_uri')): ?>
-            <?php print check_markup(implode($variables['separator'], $value['value']), 'islandora_solr_metadata_filtered_html'); ?>
-          <?php else: ?>
-            <p><?php print l($value['value'][0], $value['value'][0]); ?></p>
-          <?php endif; ?>
-        </dd>
-        <?php $row_field++; ?>
+	  
+      <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>">
+        <?php print $value['display_label']; ?>
+      </dt>
+      <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
+		
+        <?php if ($value['solr_field'] == 'mods_doi_uri'): ?>
+          <p><?php print l($value['value'][0], $value['value'][0]); ?></p>
+
+        <?php elseif ($value['solr_field'] == 'mods_note_funding_s'): ?>
+		<?php // dsm ($value); ?>
+		<?php print $value['award_markup']; ?> 
+
+        <?php else: ?>
+          <?php print check_markup(implode($variables['separator'],
+			    $value['value']), 'islandora_solr_metadata_filtered_html'); ?>
+        <?php endif; ?>
+
+      </dd>
+      <?php $row_field++; ?>
       <?php endforeach; ?>
     </dl>
   </div>
 </fieldset>
 <?php endif; ?>
 <?php else: ?>
-  <fieldset <?php $print ? print('class="islandora islandora-metadata"') : print('class="islandora islandora-metadata collapsible collapsed"');?>>
-    <legend><span class="fieldset-legend"><?php print t('Details'); ?></span></legend>
-    <?php //XXX: Hack in markup for message. ?>
-    <div class="messages--warning messages warning">
-      <?php print $not_found_message; ?>
-    </div>
-  </fieldset>
+<fieldset <?php $print ? print('class="islandora islandora-metadata"') : print('class="islandora islandora-metadata collapsible collapsed"');?>>
+  <legend><span class="fieldset-legend"><?php print t('Details'); ?></span></legend>
+  <?php //XXX: Hack in markup for message. ?>
+  <div class="messages--warning messages warning">
+    <?php print $not_found_message; ?>
+  </div>
+</fieldset>
 <?php endif; ?>

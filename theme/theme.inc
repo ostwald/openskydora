@@ -93,3 +93,29 @@ function template_preprocess_openskydora_embargo_messenger(&$variables) {
     drupal_goto ($goto, $options);
    
 }
+
+/**
+ * display funding information based in award id, and related dataset
+ * or software items
+ */
+function template_process_openskydora_metadata_display(array &$variables) {
+
+    if (isset($variables['solr_fields']['mods_note_funding_s'])) {
+        $award_markup = array();
+        $award_ids = $variables['solr_fields']['mods_note_funding_s']['value'];
+        foreach($award_ids as $award_id) {
+            // todo: look in cache for award_info!
+            $kuali_info = get_kuali_award_info($award_id);
+            $award_markup[] = "<div>" . $kuali_info['title'].'  (' . $kuali_info['sponsorName'] . " #$award_id)</div>\n";
+            $variables['solr_fields']['mods_note_funding_s']['award_markup'] = implode($award_markup);
+        }
+    }
+
+    // place holder for any manipulation we want to do for related
+    // DataSet or software ...
+    if (isset($variables['solr_fields']['mods_relatedItem_genre_authorityURI_ms'])) {
+        //dsm($variables['solr_fields']['mods_relatedItem_genre_authorityURI_ms']);
+        $dataset_markup = array();
+    }
+    
+}
