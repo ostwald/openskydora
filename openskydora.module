@@ -32,6 +32,14 @@ function openskydora_menu () {
         'access callback' => TRUE,
         'expanded' => TRUE,
     );
+
+    $items['admin/config/system/openskydora'] = array(
+        'title' => 'OpenSky',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array ('openskydora_config_form'),
+        'access arguments' => array('access administration pages'),
+        'type' => MENU_NORMAL_ITEM,
+    );
     
     return $items;
 }
@@ -180,3 +188,18 @@ function openskydora_scratch() {
 function openskydora_embargo_messenger ($pid) {
     return theme('openskydora_embargo_messenger', array('pid' => $pid));
 }
+
+function openskydora_config_form ($form, &$form_state) {
+    $form['openskydora_ga_id'] = array (
+        '#type' => 'textfield',
+        '#title' => t('Google Analytics ID'),
+	'#default_value' => variable_get('openskydora_ga_id', ''),
+        '#size' => 14,
+        '#maxlength' => 20,
+        '#description' => t('The Google Analytics ID.'),
+        '#required' => TRUE,
+    );
+
+    return system_settings_form($form);
+}
+
