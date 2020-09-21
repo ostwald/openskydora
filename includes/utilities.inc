@@ -96,7 +96,6 @@ function openskydora_get_pid_subcollections_pids ($parent_pid) {
         } else {
             $pids = array();
         }
-
         cache_set ($key, $pids);
     }
     return $pids;
@@ -492,12 +491,15 @@ function openskydora_ir_citationCModel_islandora_view_object_alter (&$object, &$
         
         $default_viewer = variable_get('islandora_scholar_viewers');
         $default_viewer = $default_viewer['default'];
-        
+
         if (isset($object['PDF']) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object['PDF']) && $default_viewer == 'none') {
             $filename = str_replace(":", "_", $object->id);
+            $path = "islandora/object/$object->id/datastream/PDF/download/citation.pdf";
+            $options['attributes']['class'] = array('islandora-pdf-link');
+            $link = l('PDF', $path, $options);
             $rendered['citation.tab']['pdf_download'] = array(
                 '#type' => 'item',
-                '#markup' => '<div class="openskydora-info">' . t('Download ') . l(t('PDF'), "islandora/object/$object->id/datastream/PDF/download/citation.pdf") . '</div>',
+                '#markup' => '<div class="openskydora-info">' . t('Download ') . $link . '</div>',
                 '#weight' => $rendered['citation.tab']['pdf_download']['#weight'],
             );
         }
