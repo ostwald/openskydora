@@ -38,9 +38,8 @@
         <?php if ($value['solr_field'] == 'mods_doi_uri'): ?>
           <p><?php print l($value['value'][0], $value['value'][0]); ?></p>
 
-        <?php elseif ($value['solr_field'] == 'mods_note_funding_s'): ?>
-		<?php // dsm ($value); ?>
-		<?php print $value['award_markup']; ?> 
+        <?php elseif ($value['solr_field'] == $variables['funding_info_field_name']): ?>
+          <?php print $value['award_markup']; ?> 
 
         <?php else: ?>
           <?php print check_markup(implode($variables['separator'],

@@ -345,7 +345,8 @@ function openskydora_islandora_solr_results_alter(&$object_results, $query_proce
 
 /**
  * Supply in collections info for islandora_scholar (citation model).
-Called from islandora_scholar_get_metadata_display(in islandora_scholar/includes/utilities.inc)
+ * Called from islandora_scholar_get_metadata_display
+ *    (in islandora_scholar/includes/utilities.inc)
  */
 function openskydora_get_in_collections_display ($object) {
     module_load_include('inc', 'islandora', 'includes/utilities');
@@ -364,33 +365,6 @@ function openskydora_retrieve_doi_markup(AbstractObject $object) {
         $markup = '<div class="openskydora-info">Published Version: <a href="http://dx.doi.org/' . $doi_link . '">http://dx.doi.org/' . $doi_link . '</a> </div>';
     }
     return $markup;
-}
-
-/**
- * Add "in collection" link to metadata display.
- * used to be openskydora_islandora_scholar_get_metadata_display? 
-
- * This functino does not seem to be called.. CAN WE DELETE IT??
- */
-function openskydora_get_metadata_display (&$display, $object, $weight) {
-
-    dsm ("openskydora_get_metadata_display");
-    
-    if (variable_get('islandora_scholar_use_standard_metadata_display', FALSE)) {
-        module_load_include('inc', 'islandora', 'includes/metadata');
-        // Borrowing core JS for fieldsets.                                                                                              
-        drupal_add_js('misc/form.js');
-        drupal_add_js('misc/collapse.js');
-        $metadata = islandora_retrieve_metadata_markup($object);
-        $description = islandora_retrieve_description_markup($object);
-        $doi_link = openskydora_retrieve_doi_markup($object);
-
-        // Insert 'in collections' display element from openskydora
-        $in_collections = openskydora_get_in_collections_display($object);
-
-        $display['#markup'] = $doi_link . $description . $in_collections . $metadata;
-    }
-
 }
 
 /*
@@ -440,87 +414,15 @@ function openskydora_pdf_upload_form_validate(&$form, &$form_state) {
     } 
 }
 
-//----------------
-// Experimental - this is how we would alter ALL content model views 
-function openskydora_islandora_view_object_alter (&$object, &$rendered) {
-    // dpm ("VIEW_OBJECT_ALTER");
-    //    dpm ($object->models[0]);
-    //    dpm ($rendered);
-
-}
-
 /**
-   implements view_object hook
-*/
-function openskydora_view_object ($object) {
-    dsm ('openskydora_view_object');
-}
-
-
-/**
- * Alter all citationCModel views
- *
- * - view and download counts
- * - dowload PDF link
- * - "in collections" 
+ * Implement the ir_citationCModel_islandora_view_object hook so we
+ * can display ir_citationCModel objects (rather than
+ * islandora_scholar, which used strictly renderable arrays)
  */
-function openskydora_ir_citationCModel_islandora_view_object_alter (&$object, &$rendered) {
-
-    // add viewed and downloaded counts if there is a citation.tab property in $rendered
-    if (isset($rendered['citation.tab'])) {
-        if (module_exists('islandora_usage_stats')) {
-            module_load_include('inc', 'islandora_usage_stats', 'includes/db');
-            // using the view_count method from db.inc
-            $view_count = islandora_usage_stats_get_individual_object_view_count($object);
-            $ds_count = islandora_usage_stats_get_datastream_downloads_count($object);
-            $times_downloaded = 0;
-            if (array_key_exists('PDF',$ds_count)){
-                $times_downloaded = $ds_count['PDF'];
-            }
-            $rendered['citation.tab']['view_count']['#markup'] =t("<div class=\"openskydora-info\">Times Viewed: $view_count <br/>" .
-                                                 "Times Downloaded: $times_downloaded </div>");
-            /* we have to assign view_count a weight that puts it in between
-               'preview' and 'pdf_download'. the other #weight values are integers but the following seems to
-               work to put 'view_count' above 'pdf_download'. note that using 'pdf_download's exact 
-               weight also does the same thing ...
-            */
-            $rendered['citation.tab']['view_count']['#weight'] = $rendered['citation.tab']['pdf_download']['#weight'] - 0.5;
-        } 
-        
-        // Set text on download link for PDFs (see original in islandora_scholar_get_view())
-        
-        $default_viewer = variable_get('islandora_scholar_viewers');
-        $default_viewer = $default_viewer['default'];
-
-        if (isset($object['PDF']) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object['PDF']) && $default_viewer == 'none') {
-            $filename = str_replace(":", "_", $object->id);
-            $path = "islandora/object/$object->id/datastream/PDF/download/citation.pdf";
-            $options['attributes']['class'] = array('islandora-pdf-link');
-            $link = l('PDF', $path, $options);
-            $rendered['citation.tab']['pdf_download'] = array(
-                '#type' => 'item',
-                '#markup' => '<div class="openskydora-info">' . t('Download ') . $link . '</div>',
-                '#weight' => $rendered['citation.tab']['pdf_download']['#weight'],
-            );
-        }
-
-        // change the way "metadata" is displayed (see
-        // islandora_scholar_get_metadata_display) to include $doi_link (Published Version ..) and
-        // $in_collections
-        if (variable_get('islandora_scholar_use_standard_metadata_display', FALSE)) {
-            module_load_include('inc', 'islandora', 'includes/metadata');
-            // Borrowing core JS for fieldsets.
-            drupal_add_js('misc/form.js');
-            drupal_add_js('misc/collapse.js');
-
-            $metadata = islandora_retrieve_metadata_markup($object);
-            $description = islandora_retrieve_description_markup($object);
-            $doi_link = openskydora_retrieve_doi_markup($object);
-            $in_collections = openskydora_get_in_collections_display($object);
-
-            $rendered['citation.tab']['metadata']['#markup'] = $doi_link . $description . $in_collections . $metadata;
-        }        
-    }
+function openskydora_ir_citationCModel_islandora_view_object($object, $page_number, $page_size) {
+    module_load_include('inc', 'islandora', 'includes/utilities');
+    $output = theme('openskydora_citation', array('islandora_object' => $object));
+    return array('' => $output);
 }
 // ---------- overriding scholar/includes/upload.tab.inc
 /**
@@ -903,22 +805,4 @@ objects PID to the url, NOT the object's whole URL
 function openskydora_form_islandora_ip_embargo_settings_form_alter(array &$form, array &$form_state) {
     $form['islandora_ip_embargo_embargoed_redirect_append_url']['#title'] = 'Append embargoed object\'s PID';
     $form['islandora_ip_embargo_embargoed_redirect_append_url']['#description'] = 'Check this option if you want to append the embargoed object\'s URL';
-}
-
-/**
-   Implements hook_module_implments_alter
-   - ensures that the openskydora version of the
-   islandora_object_access hook is called.
-*/ 
-function openskydora_module_implements_alter(&$implementations, $hook) {
-
-  if ($hook != 'islandora_object_access') {
-    return;
-  }
-
-  // drupal_set_message ("openskydora_module_implements_alter: hook: $hook");
-  $module = 'openskydora';
-  $group = array($module => $implementations[$module]);
-  unset($implementations[$module]);
-  $implementations = $group + $implementations;
 }

@@ -61,11 +61,12 @@ function openskydora_theme_registry_alter(&$theme_registry) {
             array_splice ($theme_registry['islandora_basic_collection_wrapper']['preprocess functions'], 1, 0, 'template_preprocess_openskydora_basic_collection_wrapper');
         }        
     }
+
     // islandora_openseadragon
     if (isset($theme_registry['islandora_openseadragon_clipper']) && !empty($theme_registry['islandora_openseadragon_clipper'])) {
         unset ($theme_registry['islandora_openseadragon_clipper']);
-        //        dpm ('islandora_openseadragon_clipper unset');
     } 
+
     if (isset($theme_registry['islandora_openseadragon_viewer']) && !empty($theme_registry['islandora_openseadragon_viewer'])) {
 
         // Replace "template_process_islandora_openseadragon_viewer" with
@@ -78,9 +79,40 @@ function openskydora_theme_registry_alter(&$theme_registry) {
         }
         // stick openskydora function on end of process functions array
         //         $theme_registry['islandora_openseadragon_viewer']['process functions'][] = 'openskydora_template_process_islandora_openseadragon_viewer';
-        //        dpm ($theme_registry['islandora_openseadragon_viewer']);
     }
 }
+
+/**
+   Implements hook_module_implements_alter
+   - ensures that the openskydora version of the
+   islandora_object_access hook is called.
+
+   - disable
+     islandora_scholar_ir_citationCModel_islandora_view_object, which
+     used the "renderable array" technique, instead of the template
+     approach used by other content models.
+
+*/ 
+function openskydora_module_implements_alter(&$implementations, $hook) {
+
+    // drupal_set_message ("openskydora_module_implements_alter: hook: $hook");
+
+  if ($hook == 'islandora_object_access') {
+
+      $module = 'openskydora';
+      $group = array($module => $implementations[$module]);
+      unset($implementations[$module]);
+      $implementations = $group + $implementations;
+  }
+
+  // disable islandora_scholar_ir_citationCModel_islandora_view_object
+  if ($hook == 'ir_citationCModel_islandora_view_object') {
+      if (isset ($implementations['islandora_scholar'])) {
+          unset ($implementations['islandora_scholar']);
+      }
+  }
+}
+
 
 /**
  * Implements hook_theme().
@@ -152,6 +184,14 @@ function openskydora_theme() {
                 'option_data' => NULL,
             ),
         ),
+                
+        'openskydora_citation' => array(
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'islandora-citation',
+            'variables' => array('islandora_object' => NULL),
+        ),
+        
     );
 }
 
