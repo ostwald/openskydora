@@ -367,6 +367,41 @@ function openskydora_retrieve_doi_markup(AbstractObject $object) {
     return $markup;
 }
 
+function openskydora_retrieve_related_items(AbstractObject $object) {
+    $markup = array();
+    $mods_xml = simplexml_load_string($object['MODS']->content);
+    $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
+    $related_item_xpath = $mods_xml->xpath('//mods:relatedItem[mods:genre[@authorityURI="https://doi.org/10.5438/0014"]]');
+    if ($related_item_xpath) {
+
+        foreach ($related_item_xpath as $related_item) {
+            $item_markup = array ();
+
+            $title_path = $related_item->xpath('mods:titleInfo/mods:title');
+            if ($title_path) {
+                $item_markup['title'] = $title_path[0]->__toString();
+            }
+
+            $publisher_path = $related_item->xpath('mods:originInfo/mods:publisher');
+            if ($publisher_path) {
+                $item_markup['publisher'] = $publisher_path[0]->__toString();
+            }
+
+            $genre_path = $related_item->xpath('mods:genre');
+            if ($genre_path) {
+                $item_markup['genre'] = $genre_path[0]->__toString();
+            }
+
+            $doi_path = $related_item->xpath('mods:identifier[@type="DOI"]');
+            if ($doi_path) {
+                $item_markup['doi'] = $doi_path[0]->__toString();
+            }
+            $markup[] = $item_markup;
+        }
+    }
+    return $markup;
+}
+
 /*
  * Islandora_scholar _pdf_upload_form_alter is used to upload PDF in the process
  * of creating a new object with forms. (see includes/pdf_upload.form.inc)

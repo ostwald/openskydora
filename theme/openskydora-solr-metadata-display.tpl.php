@@ -41,6 +41,9 @@
         <?php elseif ($value['solr_field'] == $variables['funding_info_field_name']): ?>
           <?php print $value['award_markup']; ?> 
 
+		<?php elseif ($value['solr_field'] == 'mods_relatedItem_genre_authorityURI_ms'): ?>
+          <?php print $value['dataset_markup']; ?>
+
         <?php else: ?>
           <?php print check_markup(implode($variables['separator'],
 			    $value['value']), 'islandora_solr_metadata_filtered_html'); ?>

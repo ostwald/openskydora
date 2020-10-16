@@ -103,7 +103,7 @@ function template_preprocess_openskydora_embargo_messenger(&$variables) {
 function template_process_openskydora_metadata_display(array &$variables) {
     $funding_info_field_name = 'mods_note_funding_ms';
     $variables['funding_info_field_name'] = $funding_info_field_name;
-    //    dsm ($variables);
+
     if (isset($variables['solr_fields'][$funding_info_field_name])) {
         $award_markup = array();
         $award_ids = $variables['solr_fields'][$funding_info_field_name]['value'];
@@ -120,13 +120,22 @@ function template_process_openskydora_metadata_display(array &$variables) {
         }
     }
 
-    // place holder for any manipulation we want to do for related
-    // DataSet or software ...
-    if (isset($variables['solr_fields']['mods_relatedItem_genre_authorityURI_ms'])) {
-        //dsm($variables['solr_fields']['mods_relatedItem_genre_authorityURI_ms']);
-        $dataset_markup = array();
+
+    // Related DataSet and/or software ...
+
+    // the solr_field_name is configured per framework, and is how we
+    // get related items displayed in details
+    $related_items = openskydora_retrieve_related_items ($variables['islandora_object']);
+    if ($related_items) {
+        $related_item_markup = array();
+        $related_items = openskydora_retrieve_related_items ($variables['islandora_object']);
+        foreach ($related_items as $related_item) {
+            $doi_url = 'https://doi.org/' . $related_item['doi'];
+            $related_item_markup[] = '<li><a href="' . $doi_url . '">' .$related_item['title'] . '</a></li>';
+        }
+        $solr_field_name = 'mods_relatedItem_genre_authorityURI_ms';
+        $variables['solr_fields'][$solr_field_name]['dataset_markup'] = implode($related_item_markup);
     }
-    
 }
 
 /**
@@ -222,6 +231,6 @@ function template_preprocess_openskydora_citation (array &$variables) {
     // DOI LINK
     $variables['doi_link'] = openskydora_retrieve_doi_markup($islandora_object);
     
-    dsm ($variables);
+    //    dsm ($variables);
     
 }
