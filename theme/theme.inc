@@ -40,8 +40,6 @@ function template_preprocess_openskydora_basic_collection_wrapper(&$variables) {
         // we don't want to redirect if there is more to the url
         // e.g., /islandora/objects/islandora%3Ajonscollection/datastream/TN/view
 
-        //dsm ("redirecting to search view");
-        //dsm( current_path());
         openskydora_redirect_to_search_view($islandora_object->id);
         return;
     }
@@ -94,47 +92,95 @@ function template_preprocess_openskydora_embargo_messenger(&$variables) {
    
 }
 
+
 /**
  * Implements template_preprocess_HOOK().
  *
- * display funding information based in award id, and related dataset
- * or software items
+ * Support display the Details (configured solr_fields). Provide field-specific
+ * views for funding_info, authors, contributore
  */
 function template_process_openskydora_metadata_display(array &$variables) {
+    //    dsm($variables);
+    $islandora_object = $variables['islandora_object'];
+    $funders = openskydora_get_funding_info($islandora_object);
+
     $funding_info_field_name = 'mods_note_funding_ms';
     $variables['funding_info_field_name'] = $funding_info_field_name;
 
     if (isset($variables['solr_fields'][$funding_info_field_name])) {
         $award_markup = array();
         $award_ids = $variables['solr_fields'][$funding_info_field_name]['value'];
-        //dsm ($variables['solr_fields']);
+
         foreach($award_ids as $award_id) {
-            // todo: look in cache for award_info!
-            $kuali_info = get_kuali_award_info($award_id);
+            $kuali_info = get_openskydora_kuali_award_info($award_id);
+            
             if (isset($kuali_info['title']) && isset($kuali_info['sponsorName'])) {
-                $award_markup[] = "<li>" . $kuali_info['title'].'  (' . $kuali_info['sponsorName'] . " #$award_id)</li>\n";
+                $award_markup[] = "<p>" . $kuali_info['sponsorName'] . ' #'.$award_id.' - '.$kuali_info['title']."</p>\n";
             } else {
-                $award_markup[] = "<li>$award_id</li>\n";
+                $award_markup[] = "<p>$award_id</p>\n";
             }
+	    
             $variables['solr_fields'][$funding_info_field_name]['award_markup'] = implode($award_markup);
         }
     }
 
+    /* authors */
+    $authors_field_name = 'author_Display_with_Affiliation';
+    if (isset($variables['solr_fields'][$authors_field_name])) {
+        $authors_markup = '';
+	$authors = $variables['solr_fields'][$authors_field_name]['value'];
 
-    // Related DataSet and/or software ...
+	$authors_count = 0;
+	$total = count($authors);
 
-    // the solr_field_name is configured per framework, and is how we
-    // get related items displayed in details
-    $related_items = openskydora_retrieve_related_items ($variables['islandora_object']);
-    if ($related_items) {
-        $related_item_markup = array();
-        $related_items = openskydora_retrieve_related_items ($variables['islandora_object']);
-        foreach ($related_items as $related_item) {
-            $doi_url = 'https://doi.org/' . $related_item['doi'];
-            $related_item_markup[] = '<li><a href="' . $doi_url . '">' .$related_item['title'] . '</a></li>';
-        }
-        $solr_field_name = 'mods_relatedItem_genre_authorityURI_ms';
-        $variables['solr_fields'][$solr_field_name]['dataset_markup'] = implode($related_item_markup);
+	foreach ($authors as $author) {
+          if ($authors_count == 5) {
+            $authors_markup .= '<span id="authors_more" class="hiddenContent">';
+	  }
+	  $authors_markup .= '<p>'.$author.'</p>';
+
+          if ($authors_count == $total-1 && $authors_count > 5) {
+            $authors_markup .= '</span><button id="authors_more_btn" class="closed" aria-label="Show more or less authors toggle" onclick="toggleContent(\'authors_more\')">'.t('Show more').'</button>';
+	  }
+	  $authors_count++;
+	}
+	$variables['solr_fields'][$authors_field_name]['authors_markup'] = $authors_markup;
+
+    }
+
+    /* contributors */
+    $contrib_field_name = 'contributor_Display_with_Affiliation';
+    if (isset($variables['solr_fields'][$contrib_field_name])){
+	    $people_markup = "";
+	    $people = $variables['solr_fields'][$contrib_field_name]['value'];
+	    	    
+	    $people_count = 0;
+	    $total = count($people);
+	 
+	    foreach($people as $person){
+	       if($people_count == 5){
+	         $people_markup .= '<span id="contrib_more" class="hiddenContent">';
+	       }
+	       $people_markup .= '<p>'.$person.'</p>';
+
+	       if($people_count == $total-1 && $people_count > 5){
+                 $people_markup .= '</span><button id="contrib_more_btn" class="closed" aria-label="show more or less contributors toggle" onclick="toggleContent(\'contrib_more\')">'.t('Show more').'</button>';
+	       }
+	       $people_count++;
+	    }
+
+	    $variables['solr_fields'][$contrib_field_name]['people_markup'] = $people_markup;  
+    }
+
+     /* Remove the Display_Name field (where does this even come from?)
+       - Find any content model that uses this field (see metadata
+       display config) - None found
+       - Find where in the code it is added to the solr_fields. -
+       seems to be configured deeper than the contentModel configs. I
+       cannot find it in the source code. 
+    */   
+    if (isset ($variables['solr_fields']['Display_Name'])) {
+        unset ($variables['solr_fields']['Display_Name']);
     }
 }
 
@@ -170,7 +216,7 @@ function template_preprocess_openskydora_citation (array &$variables) {
     $variables['parent_collections'] = islandora_get_parents_from_rels_ext($islandora_object);
     $variables['metadata'] = islandora_retrieve_metadata_markup($islandora_object);
     $variables['description'] = islandora_retrieve_description_markup($islandora_object);
-
+    
     global $base_url;
 
     // Download swiped from _alter
@@ -209,7 +255,8 @@ function template_preprocess_openskydora_citation (array &$variables) {
     if (isset($islandora_object['PREVIEW']) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $islandora_object['PREVIEW'])) {
         $preview_url = url("islandora/object/{$islandora_object->id}/datastream/PREVIEW/view");
         $params = array(
-            'title' => $islandora_object->label,
+            // 'title' => $islandora_object->label,
+            'title' => 'Click to view',
             'path' => $preview_url,
         );
 
@@ -234,3 +281,5 @@ function template_preprocess_openskydora_citation (array &$variables) {
     //    dsm ($variables);
     
 }
+
+

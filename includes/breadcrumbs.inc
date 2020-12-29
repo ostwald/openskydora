@@ -53,12 +53,13 @@ function openskydora_islandora_breadcrumbs_alter(&$data, $context) {
     if ($collection) {
         module_load_include('inc', 'islandora', 'includes/breadcrumb');
         $obj = openskydora_get_fedora_object($collection);
-
-        $path_crumbs = islandora_get_breadcrumbs_recursive($obj->id, $obj->repository);
-
+        if ($obj) {
+            $path_crumbs = islandora_get_breadcrumbs_recursive($obj->id, $obj->repository);
+        } else {
+            $path_crumbs = array ();
+        }
 
         // PATH_BREADCRUMBS - anscestors in order from root down to parent
-
         if (!isset($search_data) & !isset($filter_data)) {
             
             // pop the parent and strip the link, leaving collection name

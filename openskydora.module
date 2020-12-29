@@ -61,7 +61,7 @@ function openskydora_theme_registry_alter(&$theme_registry) {
             array_splice ($theme_registry['islandora_basic_collection_wrapper']['preprocess functions'], 1, 0, 'template_preprocess_openskydora_basic_collection_wrapper');
         }        
     }
-
+    /*
     // islandora_openseadragon
     if (isset($theme_registry['islandora_openseadragon_clipper']) && !empty($theme_registry['islandora_openseadragon_clipper'])) {
         unset ($theme_registry['islandora_openseadragon_clipper']);
@@ -80,6 +80,8 @@ function openskydora_theme_registry_alter(&$theme_registry) {
         // stick openskydora function on end of process functions array
         //         $theme_registry['islandora_openseadragon_viewer']['process functions'][] = 'openskydora_template_process_islandora_openseadragon_viewer';
     }
+
+    */
 }
 
 /**

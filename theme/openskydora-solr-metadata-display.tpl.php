@@ -29,27 +29,36 @@
     <dl xmlns:dcterms="http://purl.org/dc/terms/" class="islandora-inline-metadata islandora-metadata-fields">
       <?php $row_field = 0; ?>
       <?php foreach($solr_fields as $value): ?>
-	  
+      <?php if($value['solr_field'] != 'mods_relatedItem_genre_authorityURI_ms' && $value['solr_field'] != 'mods_abstract_s' ) {?>	  
       <dt class="<?php print $row_field == 0 ? ' first' : ''; ?>">
-        <?php print $value['display_label']; ?>
+	<?php 
+	 print $value['display_label'];
+ 	?>
       </dt>
       <dd class="<?php print $row_field == 0 ? ' first' : ''; ?>">
-		
+
         <?php if ($value['solr_field'] == 'mods_doi_uri'): ?>
           <p><?php print l($value['value'][0], $value['value'][0]); ?></p>
 
         <?php elseif ($value['solr_field'] == $variables['funding_info_field_name']): ?>
           <?php print $value['award_markup']; ?> 
 
-		<?php elseif ($value['solr_field'] == 'mods_relatedItem_genre_authorityURI_ms'): ?>
+	<?php elseif ($value['solr_field'] == 'mods_relatedItem_genre_authorityURI_ms'): ?>
           <?php print $value['dataset_markup']; ?>
 
-        <?php else: ?>
+
+       <?php elseif ($value['solr_field'] == 'contributor_Display_with_Affiliation'): ?>
+          <?php print $value['people_markup']; ?>
+
+       <?php elseif ($value['solr_field'] == 'author_Display_with_Affiliation'): ?>
+	   <?php print $value['authors_markup']; ?>
+       <?php else: ?>
           <?php print check_markup(implode($variables['separator'],
 			    $value['value']), 'islandora_solr_metadata_filtered_html'); ?>
         <?php endif; ?>
 
       </dd>
+	<?php } ?>
       <?php $row_field++; ?>
       <?php endforeach; ?>
     </dl>

@@ -86,7 +86,7 @@ function openskydora_get_dc_array ($pid) {
 function openskydora_get_pid_subcollections_pids ($parent_pid) {
 
     $key = 'subcollections_pids_'.$parent_pid;
-    if ($cache = cache_get($key)) {
+    if ($cache = @cache_get($key)) {
         $pids = $cache->data;
     }
     else {
@@ -116,7 +116,7 @@ function openskydora_get_subcollections_recursive($parent_pid){
 
     $key = 'subcollections_recursive_'.$parent_pid;
 
-    if ($cache = cache_get($key)) {
+    if ($cache = @cache_get($key)) {
         $subs = $cache->data;
     } else {
         $subs = array($parent_pid);
@@ -204,9 +204,12 @@ function openskydora_get_obj_subcollection_infos(AbstractObject $object) {
 
 function openskydora_get_pid_subcollection_infos ($parent_pid) {
 
+    if (!$parent_pid) {
+        return array ();
+    }
     $key = 'subollection_infos_'.$parent_pid;
 
-    if ($cached = cache_get($key)) {
+    if ($cached = @cache_get($key)) {
         $infos = $cached->data;
     } else {
         $obj = openskydora_get_fedora_object($parent_pid);
@@ -342,7 +345,6 @@ function openskydora_islandora_solr_results_alter(&$object_results, $query_proce
     }
 }
 
-
 /**
  * Supply in collections info for islandora_scholar (citation model).
  * Called from islandora_scholar_get_metadata_display
@@ -355,6 +357,9 @@ function openskydora_get_in_collections_display ($object) {
         'parent_collections' => $parent_collections));
 }
 
+/**
+ * Grab the DOI if there is one, and return markup for displaying it
+ */
 function openskydora_retrieve_doi_markup(AbstractObject $object) {
     $markup = '';
     $mods_xml = simplexml_load_string($object['MODS']->content);
@@ -367,6 +372,27 @@ function openskydora_retrieve_doi_markup(AbstractObject $object) {
     return $markup;
 }
 
+/**
+ * This alter hook gets called but I don't understand what the heck
+ * its good for
+ */
+function openskydora_islandora_metadata_object_description_alter(AbstractObject $object) {
+    // dsm ('openskydora_islandora_metadata_object_description_alter');
+    // dsm($object);
+}
+
+
+/**
+ * this function is poorly named! It only grabs the items that have an
+ * authorized genre attribute. There be other related items in the object
+
+ * related items returned by this function have the following fields:
+ * - title
+ * - publisher
+ * - genre
+ * - doi
+ * - #markup
+ */
 function openskydora_retrieve_related_items(AbstractObject $object) {
     $markup = array();
     $mods_xml = simplexml_load_string($object['MODS']->content);
@@ -401,6 +427,100 @@ function openskydora_retrieve_related_items(AbstractObject $object) {
     }
     return $markup;
 }
+
+
+/**
+ * related_software items have the fields:
+ * - title
+ * - publisher
+ * - genre
+ * - doi
+ * - #markup
+ */
+function openskydora_get_related_software(AbstractObject $object) {
+    return  openskydora_get_related_genre('Software', $object);
+}
+
+/**
+ * utility function to get the related items having a specified GENRE,
+ * e.g. "Dataset", "Software"
+ */
+function openskydora_get_related_genre(string $genre, AbstractObject $object) {
+    $related_items = openskydora_retrieve_related_items ($object);
+    $mods_genre_items = array();
+    foreach ($related_items as &$related_item) {
+        if ($related_item['genre'] == $genre) {
+            $doi_url = 'https://doi.org/' . @$related_item['doi'];
+            $related_item['#markup'] = '<li><a href="' . $doi_url . '">' .$related_item['title'] . '</a></li>';
+            $mods_genre_items[] = $related_item;
+        }
+    }
+    return $mods_genre_items;    
+}
+
+/**
+ * find related ITems that are neither Software or Dataset
+ */
+function openskydora_get_related_misc (AbstractObject $object) {
+    $related_items = openskydora_retrieve_related_items ($object);
+    $misc_items = array();
+    foreach ($related_items as &$related_item) {
+        if (isset($related_item['genre']) && $related_item['genre'] != 'Software' && $related_item['genre'] != 'Dataset') {
+ 
+            $doi_url = 'https://doi.org/' . @$related_item['doi'];
+            $related_item['#markup'] = '<li><a href="' . $doi_url . '">' .$related_item['title'] . '</a></li>';
+            $misc_items[] = $related_item;
+        }
+    }
+    return $misc_items;
+}
+
+/**
+ * related_dataset items have the fields:
+ * - title
+ * - publisher
+ * - genre
+ * - doi
+ * - #markup
+ */
+function openskydora_get_related_datasets(AbstractObject $object) {
+    return openskydora_get_related_genre('Dataset', $object);
+}
+
+/**
+ * funding info is obtained from kuail (using the award_id found in
+ * MODS)
+ * 
+ * funding info items have these fields:
+ * - 
+ */
+function openskydora_get_funding_info(AbstractObject $object) {
+    $mods_xml = simplexml_load_string($object['MODS']->content);
+    $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
+    $award_info_nodes = $mods_xml->xpath('//mods:note[@type="funding"]');
+
+    $funders = array();
+    
+    foreach($award_info_nodes as $award_info_node) {
+        $award_id = $award_info_node->__toString();
+
+        // todo: look in cache for award_info!
+        $kuali_info = get_openskydora_kuali_award_info($award_id);
+        if (isset($kuali_info['title']) && isset($kuali_info['sponsorName'])) {
+            $award_markup = "<p>" . $kuali_info['sponsorName'].' #' . $award_id . ' - '.$kuali_info['title']. "</p>\n";
+        } else {
+            $award_markup = "<p>$award_id</p>\n";
+        }
+
+        $funding_info['#markup'] = $award_markup;
+        $funding_info['sponsorName'] = $kuali_info['sponsorName'];
+        $funding_info['title'] = $kuali_info['title'];
+        $funding_info['award_id'] = $award_id;
+        $funders[] = $funding_info;
+    }
+    return $funders;
+}
+
 
 /*
  * Islandora_scholar _pdf_upload_form_alter is used to upload PDF in the process
@@ -807,7 +927,6 @@ can have just a little context
 */
 function openskydora_islandora_object_access($op, $islandora_object, $user) {
   module_load_include('inc', 'islandora_ip_embargo', 'includes/utilities');
-  // watchdog ('jlo', 'openskydora_islandora_object_access');
   // Handle an embargo.
   if (islandora_ip_embargo_restrict_access($islandora_object->id) && !user_access(ISLANDORA_IP_EMBARGO_MANAGE_EMBARGOES)) {
     // If there is a redirect configured then use it. If not let Drupal do it.
