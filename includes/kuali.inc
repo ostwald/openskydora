@@ -53,6 +53,19 @@ function get_kuali_award_info ($award_id, $match_criterion="SMART_PARTIAL") {
     return parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion);
 }
 
+function get_openskydora_kuali_award_info ($award_id, $match_criterion="SMART_PARTIAL") {
+    $key = 'kuali_award_info_'.$award_id;
+    if ($cache = @cache_get($key)) {
+        $info = $cache->data;
+    }
+    else {
+        $kuali_resp = get_kuali_response($award_id);
+        $info = parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion);
+        cache_set ($key, $info);
+    }
+    return $info;
+    
+}
 
 /*
  * Returns single Kuali API result for provided award_id if possible, null otherwise.
@@ -62,7 +75,6 @@ function get_kuali_award_info ($award_id, $match_criterion="SMART_PARTIAL") {
  * choose the best match if there more than 1 candidates.
  */
 function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART_PARTIAL") {
-
 
     if (!isset ($kuali_resp[0])) {
         // this is an object, which means an empty result
@@ -111,7 +123,7 @@ function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART
             }
 
             if (endsWith($kuali_award_id, $sought_award_id)) {
-                watchdog('doi_importer', "$award_id - partial match with $field field");
+                // watchdog('kuali', "$award_id - partial match with $field field");
                 return $result;
             }
         }
