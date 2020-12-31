@@ -100,7 +100,6 @@ function template_preprocess_openskydora_embargo_messenger(&$variables) {
  * views for funding_info, authors, contributore
  */
 function template_process_openskydora_metadata_display(array &$variables) {
-    //    dsm($variables);
     $islandora_object = $variables['islandora_object'];
     $funders = openskydora_get_funding_info($islandora_object);
 
@@ -172,14 +171,8 @@ function template_process_openskydora_metadata_display(array &$variables) {
 	    $variables['solr_fields'][$contrib_field_name]['people_markup'] = $people_markup;  
     }
 
-     /* Remove the Display_Name field (where does this even come from?)
-       - Find any content model that uses this field (see metadata
-       display config) - None found
-       - Find where in the code it is added to the solr_fields. -
-       seems to be configured deeper than the contentModel configs. I
-       cannot find it in the source code. 
-    */   
-    if (isset ($variables['solr_fields']['Display_Name'])) {
+    // Remove the Display_Name if we are not a pdf content_model)
+    if (!in_array('islandora:sp_pdf', $islandora_object->models) && isset ($variables['solr_fields']['Display_Name'])) {
         unset ($variables['solr_fields']['Display_Name']);
     }
 }

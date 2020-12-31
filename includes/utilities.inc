@@ -461,18 +461,18 @@ function openskydora_get_related_genre(string $genre, AbstractObject $object) {
 /**
  * find related ITems that are neither Software or Dataset
  */
-function openskydora_get_related_misc (AbstractObject $object) {
+function openskydora_get_related_others (AbstractObject $object) {
     $related_items = openskydora_retrieve_related_items ($object);
-    $misc_items = array();
+    $related_other_items = array();
     foreach ($related_items as &$related_item) {
         if (isset($related_item['genre']) && $related_item['genre'] != 'Software' && $related_item['genre'] != 'Dataset') {
  
             $doi_url = 'https://doi.org/' . @$related_item['doi'];
             $related_item['#markup'] = '<li><a href="' . $doi_url . '">' .$related_item['title'] . '</a></li>';
-            $misc_items[] = $related_item;
+            $related_other_items[] = $related_item;
         }
     }
-    return $misc_items;
+    return $related_other_items;
 }
 
 /**
