@@ -15,7 +15,6 @@ function openskydora_get_pid_from_request () {
     }
     */
 
-
     $path_parts = explode('/', request_path());
     $tail = array_pop($path_parts);
     $parts = explode (':', $tail);
@@ -36,7 +35,6 @@ function openskydora_get_search_term_from_request() {
 
     $parts = explode('/',request_path());
     $term = array_pop($parts);
-    //    $term = array_pop(explode('/',request_path()));
     return trim($term);
 }
 
@@ -128,9 +126,7 @@ function openskydora_get_subcollections_recursive($parent_pid){
         }
         cache_set($key, $subs);
     }
-
     return $subs;
-    
 }
 
 /**
@@ -146,21 +142,29 @@ function openskydora_get_obj_subcollection_pids(AbstractObject $object) {
     $get_pid = function($o) {
         return $o['pid'];
     };
-
     return array_map($get_pid, openskydora_get_obj_subcollection_infos ($object));
 }
-
+/**
+   returns true if the given pid identifies an OpenSky item
+ */
 function openskydora_is_item_pid($pid) {
     $suffix = explode(':', $pid)[1];
     return $suffix != '*' && is_numeric($suffix);
 }
+
+/**
+   returns true if the given pid identifies an OpenSky collection
+ */
 
 function openskydora_is_collection_pid ($pid) {
     $suffix = explode(':', $pid)[1];
     return $suffix != '*' && !is_numeric($suffix);
 }
 
-
+/**
+   returns true if the given pid is a collection and the collection
+   contains at least one subcollection
+ */
 function openskydora_has_subcollections ($pid) {
     return (count(openskydora_get_pid_subcollections_pids($pid)) > 0);
 }
@@ -394,97 +398,76 @@ function openskydora_islandora_metadata_object_description_alter(AbstractObject 
  * - #markup
  */
 function openskydora_retrieve_related_items(AbstractObject $object) {
-    $markup = array();
+    $related_items = array();
     $mods_xml = simplexml_load_string($object['MODS']->content);
     $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
     $related_item_xpath = $mods_xml->xpath('//mods:relatedItem[mods:genre[@authorityURI="https://doi.org/10.5438/0014"]]');
     if ($related_item_xpath) {
-
-        foreach ($related_item_xpath as $related_item) {
-            $item_markup = array ();
-
-            $title_path = $related_item->xpath('mods:titleInfo/mods:title');
+        foreach ($related_item_xpath as $related_item_el) {
+            $item = array ();
+            $related_item_el->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
+            $title_path = $related_item_el->xpath('mods:titleInfo/mods:title');
             if ($title_path) {
-                $item_markup['title'] = $title_path[0]->__toString();
+                $item['title'] = $title_path[0]->__toString();
             }
 
-            $publisher_path = $related_item->xpath('mods:originInfo/mods:publisher');
+            $publisher_path = $related_item_el->xpath('mods:originInfo/mods:publisher');
             if ($publisher_path) {
-                $item_markup['publisher'] = $publisher_path[0]->__toString();
+                $item['publisher'] = $publisher_path[0]->__toString();
             }
 
-            $genre_path = $related_item->xpath('mods:genre');
+            $genre_path = $related_item_el->xpath('mods:genre');
             if ($genre_path) {
-                $item_markup['genre'] = $genre_path[0]->__toString();
+                $item['genre'] = $genre_path[0]->__toString();
             }
 
-            $doi_path = $related_item->xpath('mods:identifier[@type="DOI"]');
+            $doi_path = $related_item_el->xpath('mods:identifier[@type="DOI"]');
             if ($doi_path) {
-                $item_markup['doi'] = $doi_path[0]->__toString();
+                $item['doi'] = $doi_path[0]->__toString();
             }
-            $markup[] = $item_markup;
+            $related_items[] = $item;
         }
     }
-    return $markup;
+    return $related_items;
 }
-
-
 /**
- * related_software items have the fields:
+ * related_items have the fields:
  * - title
  * - publisher
- * - genre
+ * - genre ('Dataset' | 'Software' | 'other')
  * - doi
  * - #markup
- */
-function openskydora_get_related_software(AbstractObject $object) {
-    return  openskydora_get_related_genre('Software', $object);
-}
 
-/**
- * utility function to get the related items having a specified GENRE,
- * e.g. "Dataset", "Software"
+ * RETURNS : 2-d array (keys = software, datasets, other) holding
+ * lists of related items
  */
-function openskydora_get_related_genre(string $genre, AbstractObject $object) {
-    $related_items = openskydora_retrieve_related_items ($object);
-    $mods_genre_items = array();
-    foreach ($related_items as &$related_item) {
-        if ($related_item['genre'] == $genre) {
-            $doi_url = 'https://doi.org/' . @$related_item['doi'];
-            $related_item['#markup'] = '<li><a href="' . $doi_url . '">' .$related_item['title'] . '</a></li>';
-            $mods_genre_items[] = $related_item;
+function openskydora_get_related_items(AbstractObject $object) {
+    $all_items = openskydora_retrieve_related_items($object);
+    
+    $output = array(
+            'software' => array(),
+            'datasets' => array(),
+            'other' => array(),
+        );
+    foreach ($all_items as &$item) {
+        $genre = $item['genre'];
+        $doi_url = 'https://doi.org/' . @$item['doi'];
+        $item['#markup'] = '<li><a href="' . $doi_url . '">' . $item['title'] . '</a></li>';
+
+        // normalize gender to 'software', 'dataset' or 'other'
+        if ($genre == 'Software') {
+            $normalized_genre = 'software';
         }
-    }
-    return $mods_genre_items;    
-}
-
-/**
- * find related ITems that are neither Software or Dataset
- */
-function openskydora_get_related_others (AbstractObject $object) {
-    $related_items = openskydora_retrieve_related_items ($object);
-    $related_other_items = array();
-    foreach ($related_items as &$related_item) {
-        if (isset($related_item['genre']) && $related_item['genre'] != 'Software' && $related_item['genre'] != 'Dataset') {
- 
-            $doi_url = 'https://doi.org/' . @$related_item['doi'];
-            $related_item['#markup'] = '<li><a href="' . $doi_url . '">' .$related_item['title'] . '</a></li>';
-            $related_other_items[] = $related_item;
+        else if ($genre == 'Dataset') {
+            $normalized_genre = 'datasets';
+        } else {
+            $normalized_genre = 'other';
         }
-    }
-    return $related_other_items;
-}
+        $output[$normalized_genre][] = $item;
 
-/**
- * related_dataset items have the fields:
- * - title
- * - publisher
- * - genre
- * - doi
- * - #markup
- */
-function openskydora_get_related_datasets(AbstractObject $object) {
-    return openskydora_get_related_genre('Dataset', $object);
+    }
+    
+    return $output;
 }
 
 /**

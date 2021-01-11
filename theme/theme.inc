@@ -138,7 +138,7 @@ function template_process_openskydora_metadata_display(array &$variables) {
 	  }
 	  $authors_markup .= '<p>'.$author.'</p>';
 
-          if ($authors_count == $total-1 && $authors_count > 5) {
+          if ($authors_count == $total-1 && $authors_count >= 5) {
             $authors_markup .= '</span><button id="authors_more_btn" class="closed" aria-label="Show more or less authors toggle" onclick="toggleContent(\'authors_more\')">'.t('Show more').'</button>';
 	  }
 	  $authors_count++;
@@ -162,7 +162,7 @@ function template_process_openskydora_metadata_display(array &$variables) {
 	       }
 	       $people_markup .= '<p>'.$person.'</p>';
 
-	       if($people_count == $total-1 && $people_count > 5){
+	       if($people_count == $total-1 && $people_count >= 5){
                  $people_markup .= '</span><button id="contrib_more_btn" class="closed" aria-label="show more or less contributors toggle" onclick="toggleContent(\'contrib_more\')">'.t('Show more').'</button>';
 	       }
 	       $people_count++;
