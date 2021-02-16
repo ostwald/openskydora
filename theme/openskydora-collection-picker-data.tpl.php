@@ -25,7 +25,7 @@
 // stopped working around 11/13 for unknown reasons ...
 
 // CUSTOM VARIABLES
-var contactLink = "mailto:ogg@ucar.edu";     // enter your Webmaster/Feedback
+var contactLink = "mailto:opensky@ucar.edu";     // enter your Webmaster/Feedback
                                              // link. Include http:// or mailto:
 var hideOrgNav = false;        // hide the entire OrgNav from view
 var hideFooter = false;          // hide the entire OrgFooter from view
