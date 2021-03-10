@@ -460,11 +460,14 @@ function openskydora_get_related_items(AbstractObject $object) {
         }
         else if ($genre == 'Dataset') {
             $normalized_genre = 'datasets';
-        } else {
+        }
+        else if ($genre == 'Text') {
+            $normalized_genre = 'documents';
+        }
+        else {
             $normalized_genre = 'other';
         }
         $output[$normalized_genre][] = $item;
-
     }
     
     return $output;
