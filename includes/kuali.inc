@@ -33,7 +33,7 @@ function get_kuali_award_id ($award_id, $match_criterion="SMART_PARTIAL") {
 
     $fields_to_check = array ('sponsorAwardId', 'fainId');
     forEach ($fields_to_check as $field) {
-        if (endswith(sanitize_id($info[$field]), sanitize_id($award_id))) {
+        if (endsWith(sanitize_id($info[$field]), sanitize_id($award_id))) {
             return $info[$field];
         }
     }
@@ -53,6 +53,13 @@ function get_kuali_award_info ($award_id, $match_criterion="SMART_PARTIAL") {
     return parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion);
 }
 
+/**
+ * legacy award_ids, as well as ids in the no_title_list, should
+ * display only an id (not a grant title)
+ * - legacies will not be found in kuali
+ * - no_titles WILL be found but we don't want to show the title cause
+ * it isn't reliable
+ */
 function get_openskydora_kuali_award_info ($award_id, $match_criterion="SMART_PARTIAL") {
     $key = 'kuali_award_info_'.$award_id;
     if ($cache = @cache_get($key)) {
@@ -149,16 +156,8 @@ function get_kuali_response($award_id) {
         $skip_award_ids = array();
     } else {
         $skip_award_ids = array(
-              'DEAC0576RL01830',
-              'N999999',
-              'CC999999',
-              '0856145',
-              'AGS0856145',
-              'ATM0753581M0856145',
-              'M0856145',
-              'DTFAWA15D00036',
-              '1755088',
-              '1852977',
+              '01830',
+              '99999',
         );
     }
 
@@ -186,15 +185,6 @@ function get_kuali_response($award_id) {
 
    return $response;
 
-}
-
-function endsWith($haystack, $needle) {
-    $length = strlen($needle);
-    if ($length == 0) {
-        return true;
-    }
-
-    return (substr($haystack, -$length) === $needle);
 }
 
 

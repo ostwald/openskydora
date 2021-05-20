@@ -2,6 +2,7 @@
 
 // Includes functions to create Islandora Solr blocks.
 require_once dirname(__FILE__) . '/includes/blocks.inc';
+require_once dirname(__FILE__) . '/includes/callbacks.inc';
 require_once dirname(__FILE__) . '/includes/utilities.inc';
 require_once dirname(__FILE__) . '/includes/doi_importer.inc';
 require_once dirname(__FILE__) . '/includes/wos.inc';
@@ -42,6 +43,19 @@ function openskydora_menu () {
     );
     
     return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function openskydora_menu_alter(&$items) {
+    $path = "/includes/callbacks.inc";
+    $items['islandora/object/%islandora_object/datastream/%islandora_datastream']['page callback']
+        = 'openskydora_track_views_as_downloads';
+    $items['islandora/object/%islandora_object/datastream/%islandora_datastream']['file']
+        = $path;
+    $items['islandora/object/%islandora_object/datastream/%islandora_datastream']['module']
+        = "openskydora";
 }
 
 // Implement hook_theme_registry_alter
@@ -235,13 +249,32 @@ function openskydora_config_form ($form, &$form_state) {
     $form['openskydora_ga_id'] = array (
         '#type' => 'textfield',
         '#title' => t('Google Analytics ID'),
-	'#default_value' => variable_get('openskydora_ga_id', ''),
+        '#default_value' => variable_get('openskydora_ga_id', ''),
         '#size' => 14,
         '#maxlength' => 20,
         '#description' => t('The Google Analytics ID.'),
         '#required' => TRUE,
     );
 
+    $form['kuali_skip_ids'] = array (
+        '#type' => 'textarea',
+        '#title' => t('Kuali Skip Award IDs'),
+        '#default_value' => variable_get('kuali_skip_ids', ''),
+        '#cols' => 20,
+        '#rows' => 5,
+        '#description' => t('Award IDs ending with these values are skipped. One value per line.'),
+        '#required' => FALSE,
+    );
+
+    $form['kuali_unresolved_ids'] = array (
+        '#type' => 'textarea',
+        '#title' => t('Kuali Unresolved Award IDs'),
+        '#default_value' => variable_get('kuali_unresolved_ids', ''),
+        '#cols' => 20,
+        '#rows' => 5,
+        '#description' => t('Award IDs that are displayed as numbers rather than being resolved into award title. One per line.'),
+        '#required' => FALSE,
+    );
     return system_settings_form($form);
 }
 

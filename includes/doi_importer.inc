@@ -709,7 +709,7 @@ function dedup_award_ids ($award_ids) {
     forEach ($award_ids as $candidate) {
         $is_right_subset = false;
         forEach ($award_ids as $id) {
-            if ((strlen($id) > strlen($candidate)) && endswith($id, $candidate)) {
+            if ((strlen($id) > strlen($candidate)) && endsWith($id, $candidate)) {
                 $is_right_subset = true;
             }
         }

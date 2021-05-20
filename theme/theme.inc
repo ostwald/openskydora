@@ -102,7 +102,7 @@ function template_preprocess_openskydora_embargo_messenger(&$variables) {
 function template_process_openskydora_metadata_display(array &$variables) {
     $islandora_object = $variables['islandora_object'];
     $funders = openskydora_get_funding_info($islandora_object);
-
+    $unresolved_ids = array_filter(array_map('trim', explode("\n", variable_get('kuali_unresolved_ids', ''))));
     $funding_info_field_name = 'mods_note_funding_ms';
     $variables['funding_info_field_name'] = $funding_info_field_name;
 
@@ -111,8 +111,11 @@ function template_process_openskydora_metadata_display(array &$variables) {
         $award_ids = $variables['solr_fields'][$funding_info_field_name]['value'];
 
         foreach($award_ids as $award_id) {
-            $kuali_info = get_openskydora_kuali_award_info($award_id);
-            
+            if (openskydora_is_unresolvable_award_id ($award_id)) {
+                $kuali_info = array();
+            } else {
+                $kuali_info = get_openskydora_kuali_award_info($award_id);
+            }
             if (isset($kuali_info['title']) && isset($kuali_info['sponsorName'])) {
                 $award_markup[] = "<p>" . $kuali_info['sponsorName'] . ' #'.$award_id.' - '.$kuali_info['title']."</p>\n";
             } else {

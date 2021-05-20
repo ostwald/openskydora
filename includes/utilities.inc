@@ -24,6 +24,16 @@ function openskydora_get_pid_from_request () {
     return null;
 }
 
+/** utility function */
+function endsWith($haystack, $needle) {
+    $length = strlen($needle);
+    if ($length == 0) {
+        return true;
+    }
+    return (substr($haystack, -$length) === $needle);
+}
+
+
 function openskydora_get_search_term_from_request() {
     $pat = ISLANDORA_SOLR_SEARCH_PATH;
 
@@ -113,7 +123,6 @@ function openskydora_get_pid_subcollections_pids ($parent_pid) {
 function openskydora_get_subcollections_recursive($parent_pid){
 
     $key = 'subcollections_recursive_'.$parent_pid;
-
     if ($cache = @cache_get($key)) {
         $subs = $cache->data;
     } else {
@@ -447,6 +456,7 @@ function openskydora_get_related_items(AbstractObject $object) {
     $output = array(
             'software' => array(),
             'datasets' => array(),
+            'documents' => array(),
             'other' => array(),
         );
     foreach ($all_items as &$item) {
@@ -473,8 +483,24 @@ function openskydora_get_related_items(AbstractObject $object) {
     return $output;
 }
 
+/** look up given award_id in configured list of "unresolvable_ids",
+ * which are displayed as award_ids, rather than resolved into titles
+ * and sponsor names
+ */
+function openskydora_is_unresolvable_award_id ($award_id) {
+    $unresolved_ids = array_filter(array_map('trim', explode("\n", variable_get('kuali_unresolved_ids', ''))));
+
+    foreach($unresolved_ids as $unresolvable) {
+        if (endsWith($award_id, $unresolvable)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
 /**
- * funding info is obtained from kuail (using the award_id found in
+ * Funding info is obtained from kuail (using the award_id found in
  * MODS)
  * 
  * funding info items have these fields:
@@ -484,25 +510,35 @@ function openskydora_get_funding_info(AbstractObject $object) {
     $mods_xml = simplexml_load_string($object['MODS']->content);
     $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
     $award_info_nodes = $mods_xml->xpath('//mods:note[@type="funding"]');
-
+    $unresolved_ids = array_filter(array_map('trim', explode("\n", variable_get('kuali_unresolved_ids', ''))));
     $funders = array();
-    
+
     foreach($award_info_nodes as $award_info_node) {
+        unset($funding_info);
         $award_id = $award_info_node->__toString();
 
-        // todo: look in cache for award_info!
-        $kuali_info = get_openskydora_kuali_award_info($award_id);
-        if (isset($kuali_info['title']) && isset($kuali_info['sponsorName'])) {
-            $award_markup = "<p>" . $kuali_info['sponsorName'].' #' . $award_id . ' - '.$kuali_info['title']. "</p>\n";
-        } else {
-            $award_markup = "<p>$award_id</p>\n";
+        if (openskydora_is_unresolvable_award_id ($award_id)) {
+            $funding_info = array(
+                '#markup' => $award_id,
+                'sponsorName' => '',
+                'title' => '',
+                'award_id' => $award_id
+            );
         }
-
-        $funding_info['#markup'] = $award_markup;
-        $funding_info['sponsorName'] = $kuali_info['sponsorName'];
-        $funding_info['title'] = $kuali_info['title'];
-        $funding_info['award_id'] = $award_id;
-        $funders[] = $funding_info;
+        else {
+            $kuali_info = get_openskydora_kuali_award_info($award_id);
+            if (isset($kuali_info['title']) && isset($kuali_info['sponsorName'])) {
+                $award_markup = "<p>" . $kuali_info['sponsorName'].' #' . $award_id . ' - '.$kuali_info['title']. "</p>\n";
+            } else {
+                $award_markup = "<p>$award_id</p>\n";
+            }
+            
+            $funding_info['#markup'] = $award_markup;
+            $funding_info['sponsorName'] = $kuali_info['sponsorName'];
+            $funding_info['title'] = $kuali_info['title'];
+            $funding_info['award_id'] = $award_id;
+            $funders[] = $funding_info;
+        }
     }
     return $funders;
 }
