@@ -33,6 +33,24 @@ function endsWith($haystack, $needle) {
     return (substr($haystack, -$length) === $needle);
 }
 
+/**
+   get the value of the requested solr field name, or null if
+   field is not found
+*/
+function get_solr_field ($islandora_object, $solr_field_name) {
+    $query_processor = new IslandoraSolrQueryProcessor();
+    $query_processor->solrQuery = 'PID:"' . $islandora_object->id . '"';
+    $query_processor->solrParams['fl'] = "PID,$solr_field_name";
+    $query_processor->executeQuery(FALSE);
+    if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
+      $solr_results_doc = $query_processor->islandoraSolrResult['response']['objects']['0']['solr_doc'];
+      // dsm($solr_results_doc);
+      if (isset ($solr_results_doc[$solr_field_name])) {
+          return $solr_results_doc[$solr_field_name];
+      }
+    }
+    return null;
+}
 
 function openskydora_get_search_term_from_request() {
     $pat = ISLANDORA_SOLR_SEARCH_PATH;
