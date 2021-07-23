@@ -309,8 +309,8 @@ function openskydora_redirect_to_search_view ($pid) {
  * and thus avoid PHP Out of memory errors 
  */
 function openskydora_islandora_solr_query($islandora_solr_query) {
-
-    $islandora_solr_query->solrParams['fl'] = 'PID,mods*,fgs*,dc.*,dsmd_DC*,keyDate*,RELS_EXT*,*Display*,fedora_datastreams_ms';
+    if (isset($islandora_solr_query->internalSolrParams['type']) && ($islandora_solr_query->internalSolrParams['type'] == "dismax" || $islandora_solr_query->internalSolrParams['type'] == "edismax"))
+        $islandora_solr_query->solrParams['fl'] = 'PID,mods*,fgs*,dc.*,dsmd_DC*,keyDate*,RELS_EXT*,*Display*,fedora_datastreams_ms';
 }
 
 /**
