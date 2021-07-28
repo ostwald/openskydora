@@ -8,25 +8,19 @@
 // see https://api.drupal.org/api/examples/block_example%21block_example.module/7.x-1.x
 
 /**
- * these "info" definitions are necessary to get the blocks on the blocks UI page
+ * these "info" definitions are necessary to get the blocks on the
+ * blocks admin UI page
  */
 function openskydora_block_info() {
     $blocks = array();
 
-    //    $blocks['openskydora_browse_collection_search'] = array (
     $blocks['openskydora_browse_collection'] = array (
         'info' => t('Openskydora Collection PID Search'),
     );
 
-    //    $blocks ['openskydora_search_collection_info'] = array (
     $blocks ['openskydora_collection_info'] = array (
         'info' => t('Openskydora search collection information'),
     );
-
-//
-//    $blocks ['openskydora_in_collections'] = array (
-//        'info' => t('OpenSky in Collections'),
-//    );
 
     $blocks ['openskydora_simple_search'] = array (
         'info' => t('OpenSkydora simple search'),
@@ -42,8 +36,6 @@ function openskydora_block_info() {
     return $blocks;
 }
 
-
-
 /**
  * implements hook_block_view
  *
@@ -53,41 +45,203 @@ function openskydora_block_view($delta = '') {
     $block = array();
     //    $pid = openskydora_get_pid_from_request();
     switch($delta) {
+        
+    case 'openskydora_browse_collection':
+        $block['subject'] = t ('Collection Search for Browse view');
+        $d_form = drupal_get_form('openskydora_browse_collection_search_form');
+        $block['content'] = drupal_render($d_form);
+        break;
+            
+    case 'openskydora_collection_info':
+        $block['subject'] = '';
+        $block['content'] = openskydora_search_collection_info();
+        break;
 
-        case 'openskydora_browse_collection':
-            $block['subject'] = t ('Collection Search for Browse view');
-            $d_form = drupal_get_form('openskydora_browse_collection_search_form');
-            $block['content'] = drupal_render($d_form);
-            break;
-        case 'openskydora_collection_info':
-            $block['subject'] = '';
-            $block['content'] = openskydora_search_collection_info();
-            break;
-        case 'openskydora_search_collection_search':
-            $block['subject'] = t ('Opensky Collection Search title');
-            $dform = drupal_get_form('openskydora_search_collection_search_form');
-            $block['content'] = drupal_render($dform);
-            break;
-        case 'openskydora_advanced_search':
-            $block['subject'] = t('OpenSky advanced search');
-            $d_form = drupal_get_form('openskydora_advanced_search_form');
-            $block['content'] = drupal_render($d_form);
-            break;
-        case 'openskydora_simple_search':
-            $block['subject'] = t('OpenSky simple search');
-            $form = drupal_get_form('openskydora_simple_search_form');
-            $block['content'] = drupal_render($form);
-            break;
+    case 'openskydora_search_collection_search':
+        $block['subject'] = t ('Opensky Collection Search title');
+        $dform = drupal_get_form('openskydora_search_collection_search_form');
+        $block['content'] = drupal_render($dform);
+        break;
 
-      case 'openskydora_collection_data':
-            $block['subject'] = t('Opensky collection picker data');
-            $block['content'] = get_collection_select_options_js();
-            break;
-    }
+    case 'openskydora_advanced_search':
+        $block['subject'] = t('OpenSky advanced search');
+        $d_form = drupal_get_form('openskydora_advanced_search_form');
+        $block['content'] = drupal_render($d_form);
+        break;
+
+    case 'openskydora_simple_search':
+        $block['subject'] = t('OpenSky simple search');
+        $form = drupal_get_form('openskydora_simple_search_form');
+        $block['content'] = drupal_render($form);
+        break;
+        
+    case 'openskydora_collection_data':
+        $block['subject'] = t('Opensky collection picker data');
+        $block['content'] = get_collection_select_options_js();
+        break;
+
+    case 'openskydora_trending_items':
+        $block['subject'] = t('Opensky trending items');
+        $block['content'] = get_trending_items_content();
+        break;
+        
+    case 'openskydora_trending_images':
+        $block['subject'] = t('Opensky trending images');
+        $block['content'] = get_trending_images_content();
+        break;
+        
+    case 'openskydora_trending_downloads':
+        $block['subject'] = t('Opensky trending downloads');
+        $block['content'] = get_trending_downloads_content();
+        break;
+
+    case 'openskydora_new_archival_items':
+        $block['subject'] = t('New archival items');
+        $block['content'] = get_new_archival_items_content();
+        break;
+    }    
     return $block;
 }
 
+function get_new_archival_items_content() {
+    module_load_include('inc', 'openskydora', 'includes/usage_stats');
+    $weeks_ago = 25;
+    $count = 3;
 
+    // archives version
+    // $args = array ('RELS_EXT_hasModel_uri_t'=>'archives');
+
+    // stage version
+    $args = array ('RELS_EXT_hasModel_uri_t'=>'islandora');
+
+    $new_items= openskydora_get_new_items($count, $weeks_ago, $args);
+
+    return theme ('openskydora_new_items', array(
+        'new_items' => $new_items,
+        'title' => 'New Archival Items',
+        'weeks_ago' => $weeks_ago,
+    ));
+}
+    
+/* opensky_trending_items theme wants
+   - $title ("trending items");
+   - $trending_objects (array ('pid'=>array($count, $obj)))
+   - $weeks_ago (5)
+*/
+function get_trending_downloads_content() {
+    module_load_include('inc', 'openskydora', 'includes/usage_stats');
+    $weeks_ago = 25;
+    $items_count = 3;
+
+    // get all views and then look for images
+    $most_downloaded_items = openskydora_get_most_downloaded($items_count, $weeks_ago);
+    // dsm($most_downloaded_items);
+    $trending_downloads = array();
+    foreach($most_downloaded_items as $pid=>$item) {
+
+        $trending_downloads[$pid] = array(
+            'count'=>$item->downloads,
+            'label'=>$item->label
+        );
+    }
+    
+    return theme('openskydora_trending_items', array(
+        'trending_items' => $trending_downloads,
+        'title' => 'Trending Downloads',
+        'count' => $items_count,
+        'weeks_ago' => $weeks_ago,
+    ));
+}
+
+/* opensky_trending_items theme wants
+   - $title ("trending items");
+   - $trending_objects (array ('pid'=>array($count, $obj)))
+   - $weeks_ago (25)
+*/
+function get_trending_images_content() {
+    module_load_include('inc', 'openskydora', 'includes/usage_stats');
+    $weeks_ago = 5;
+    $items_count = 3;
+
+    // get all views and then look for images
+    $most_viewed_items = openskydora_get_most_viewed(10000, $weeks_ago);
+
+    $trending_images = array();
+    foreach($most_viewed_items as $pid=>$item) {
+        if (count($trending_images) >= $items_count) {
+            break;
+        }
+
+        $obj = islandora_object_load($pid);
+        if (in_array('islandora:sp_basic_image', $obj->models) ||
+            in_array('islandora:sp_large_image_cmodel', $obj->models)) {
+
+                $trending_images[$pid] = array(
+                    'count'=>$item->views,
+                    'label'=>$obj->label
+                );
+            }
+    }
+    
+    return theme('openskydora_trending_items', array(
+        'trending_items' => $trending_images,
+        'title' => 'Trending Images',
+        'count' => $items_count,
+        'weeks_ago' => $weeks_ago,
+    ));
+}
+
+/* 
+   most recently viewed items
+   opensky_trending_items theme wants
+       - $title ("trending items");
+       - $trending_objects (array ('pid'=>array($count, $obj)))
+       - $weeks_ago (25)
+*/
+function get_trending_items_content() {
+    module_load_include('inc', 'openskydora', 'includes/usage_stats');
+    $weeks_ago = 5;
+    $items_count = 3;
+    $exclude = array('opensky:root');
+    $most_viewed_items = openskydora_get_most_viewed_items(
+        $items_count,
+        $weeks_ago,
+        $exclude);
+
+    $trending_items = array();
+    foreach($most_viewed_items as $pid=>$item) {
+        $trending_items[$pid] = array(
+            'count'=>$item->views,
+            'label'=>$item->obj->label
+        );
+    }
+    
+    return theme('openskydora_trending_items', array(
+        'trending_items' => $trending_items,
+        'title' => 'Trending items',
+        'count' => $items_count,
+        'weeks_ago' => $weeks_ago,
+    ));
+}
+
+function get_most_viewed_items_content() {
+    module_load_include('inc', 'openskydora', 'includes/usage_stats');
+    $most_viewed_items_weeks_ago = 25;
+    $most_viewed_items_count = 5;
+	$exclude = array('opensky:root');
+    $most_viewed_items = openskydora_get_most_viewed_items(
+        $most_viewed_items_count,
+        $most_viewed_items_weeks_ago,
+        $exclude);
+    
+    $output = theme('openskydora_most_viewed_items', array(
+        'most_viewed_items_weeks_ago' => $most_viewed_items_weeks_ago,
+        'most_viewed_items_count' => $most_viewed_items_count,
+        'most_viewed_items' => $most_viewed_items,
+    ));
+   
+    return $output;
+}
 /**
  * Generate javascript data for the collections select in simple and advanced search.
  * Show the current collection (if any), then 'All Collections' and then

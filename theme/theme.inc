@@ -1,24 +1,5 @@
 <?php
 
-/**
- * @file
- * This file contains all theme and preprocess functions
- */
-
-/**
- * Implements template_preprocess_HOOK().
- *
- */
-function template_preprocess_openskydora_scratch(&$variables) {
-    $pid = $variables['pid'];
-    $dc_array = openskydora_get_dc_array($pid);
-    $variables['title'] = $dc_array['dc:title']['value'];
-    $variables['children'] = openskydora_get_pid_subcollections_pids($pid);
-    $variables['descendants'] = openskydora_get_subcollections_recursive($pid);
-    $variables['searchables'] = openskydora_get_searchable_subcollections($pid);
-    $obj = openskydora_get_fedora_object($pid);
-    $variables['tree'] = openskydora_get_collection_tree();
-}
 
 /**
  * Implements template_preprocess_HOOK().
@@ -279,3 +260,22 @@ function template_preprocess_openskydora_citation (array &$variables) {
 }
 
 
+/**
+ * @file
+ * This file contains all theme and preprocess functions
+ */
+
+/**
+ * Implements template_preprocess_HOOK().
+ *
+ */
+function template_preprocess_openskydora_scratch(&$variables) {
+    $pid = $variables['pid'];
+    $dc_array = openskydora_get_dc_array($pid);
+    $variables['title'] = $dc_array['dc:title']['value'];
+    $variables['children'] = openskydora_get_pid_subcollections_pids($pid);
+    $variables['descendants'] = openskydora_get_subcollections_recursive($pid);
+    $variables['searchables'] = openskydora_get_searchable_subcollections($pid);
+    $obj = openskydora_get_fedora_object($pid);
+    $variables['tree'] = openskydora_get_collection_tree();
+}

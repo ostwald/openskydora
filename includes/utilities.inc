@@ -52,6 +52,55 @@ function get_solr_field ($islandora_object, $solr_field_name) {
     return null;
 }
 
+/*
+  example params:
+    $query = 'mods_extension_collectionKey_ms:"demo"';
+    $params = array(
+        'fl'=>'PID,fgs_createdDate_dt,fgs_label_s',
+        'type'=>'jlo',
+        'sort'=>'fgs_createdDate_dt desc',
+    );
+
+  NOTE: 'type' param is necessary (see openskydora_islandora_solr_query), but
+  it set explicitly so it need not be passed.
+*/
+function openskydora_solr_search($query, $params) {
+    module_load_include('inc', 'islandora_solr', 'includes/query_processor');
+    //    dsm (openskydora_get_invokers('islandora_solr_query'));
+
+    if (!isset($params['type'])) {
+        $params['type'] = 'openskydora_usage_stats';
+    }
+
+    $qp = new IslandoraSolrQueryProcessor();
+    $qp->buildQuery($query, $params);
+    //dsm($qp);
+
+    // THIS is straight outta executeQuery()
+    $path_parts = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
+    $solr = new Apache_Solr_Service($path_parts['host'], $path_parts['port'], $path_parts['path'] . '/');
+    $solr->setCreateDocuments(0);
+
+    // Query is executed.
+    try {
+      $solr_query = ($qp->internalSolrQuery) ? $qp->internalSolrQuery : $qp->solrQuery;
+      $method = 'GET';
+      $results = $solr->search($solr_query, $qp->solrStart, $qp->solrLimit, $qp->solrParams, $method);
+    }
+    catch (Exception $e) {
+      drupal_set_message(check_plain(t('Error searching Solr index')) . ' ' . $e->getMessage(), 'error');
+    }
+
+    $object_results = array();
+    if (isset($results)) {
+      $solr_results = json_decode($results->getRawResponse(), TRUE);
+      //dsm($solr_results);
+      $object_results = $solr_results['response']['docs'];
+    }
+
+    return $object_results;
+}    
+
 function openskydora_get_search_term_from_request() {
     $pat = ISLANDORA_SOLR_SEARCH_PATH;
 
@@ -303,14 +352,25 @@ function openskydora_redirect_to_search_view ($pid) {
     drupal_goto('/islandora/search/',$options);
 }
 /**
- * IMplements hook_islandora_solr_query
+ * Implements hook_islandora_solr_query
  *
  * HARD-CODE fields returned by solr query to make solr responses smaller                                                           
- * and thus avoid PHP Out of memory errors 
+ * and thus avoid PHP Out of memory errors, 
+
+ * for usage queries, perform params manipulation
  */
 function openskydora_islandora_solr_query($islandora_solr_query) {
-    if (isset($islandora_solr_query->internalSolrParams['type']) && ($islandora_solr_query->internalSolrParams['type'] == "dismax" || $islandora_solr_query->internalSolrParams['type'] == "edismax"))
-        $islandora_solr_query->solrParams['fl'] = 'PID,mods*,fgs*,dc.*,dsmd_DC*,keyDate*,RELS_EXT*,*Display*,fedora_datastreams_ms';
+    if (isset($islandora_solr_query->internalSolrParams['type'])) {
+        if ($islandora_solr_query->internalSolrParams['type'] == "dismax" || $islandora_solr_query->internalSolrParams['type'] == "edismax") {
+            $islandora_solr_query->solrParams['fl'] = 'PID,mods*,fgs*,dc.*,dsmd_DC*,keyDate*,RELS_EXT*,*Display*,fedora_datastreams_ms';
+        }
+        else if ($islandora_solr_query->internalSolrParams['type'] == "openskydora_usage_stats") {
+            $islandora_solr_query->solrParams['fl'] = $islandora_solr_query->internalSolrParams['fl'];
+            if (isset($islandora_solr_query->internalSolrParams['solrLimit'])) {
+                $islandora_solr_query->solrLimit = $islandora_solr_query->internalSolrParams['solrLimit'];
+            }
+        }
+    }
 }
 
 /**

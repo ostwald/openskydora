@@ -111,8 +111,6 @@ function openskydora_theme_registry_alter(&$theme_registry) {
 */ 
 function openskydora_module_implements_alter(&$implementations, $hook) {
 
-    // drupal_set_message ("openskydora_module_implements_alter: hook: $hook");
-
   if ($hook == 'islandora_object_access') {
 
       $module = 'openskydora';
@@ -206,6 +204,26 @@ function openskydora_theme() {
             'file' => $file,
             'template' => 'islandora-citation',
             'variables' => array('islandora_object' => NULL),
+        ),
+        'openskydora_trending_items' => array(
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'openskydora-trending-items',
+            'variables' => array(
+                'title' => NULL,
+                'trending_items' => NULL,
+                'weeks_ago'=>NULL
+            ),
+        ),
+        'openskydora_new_items' => array(
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'openskydora-new-items',
+            'variables' => array(
+                'title' => NULL,
+                'new_items' => NULL,
+                'weeks_ago'=>NULL
+            ),
         ),
         
     );
