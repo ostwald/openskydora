@@ -7,6 +7,10 @@
 
 // see https://api.drupal.org/api/examples/block_example%21block_example.module/7.x-1.x
 
+global $weeks_ago;
+$GLOBALS['weeks_ago'] = 25;
+define ('OPENSKYDORA_USAGE_WEEKS_AGO', $GLOBALS['weeks_ago']);
+
 /**
  * these "info" definitions are necessary to get the blocks on the
  * blocks admin UI page
@@ -96,8 +100,13 @@ function openskydora_block_view($delta = '') {
         break;
 
     case 'openskydora_new_archival_items':
-        $block['subject'] = t('New archival items');
+        $block['subject'] = t('New archives items');
         $block['content'] = get_new_archival_items_content();
+        break;
+
+    case 'openskydora_trending_collections':
+        $block['subject'] = t('OpenSky Trending Collections');
+        $block['content'] = get_trending_collections_content();
         break;
     }    
     return $block;
@@ -105,7 +114,8 @@ function openskydora_block_view($delta = '') {
 
 function get_new_archival_items_content() {
     module_load_include('inc', 'openskydora', 'includes/usage_stats');
-    $weeks_ago = 25;
+    //$weeks_ago = 25;
+    $weeks_ago = $GLOBALS['weeks_ago'];
     $count = 3;
 
     // archives version
@@ -118,11 +128,40 @@ function get_new_archival_items_content() {
 
     return theme ('openskydora_new_items', array(
         'new_items' => $new_items,
-        'title' => 'New Archival Items',
+        'title' => 'New in the Archives',
+        'weeks_ago' => $GLOBALS['weeks_ago'],
+    ));
+}
+
+function get_trending_collections_content() {
+    module_load_include('inc', 'openskydora', 'includes/usage_stats');
+    //$weeks_ago = 25;
+    $weeks_ago = $GLOBALS['weeks_ago'];
+    $items_count = 5;
+
+    $most_viewed_collections = openskydora_get_most_viewed_collections(
+        $items_count, $weeks_ago);
+
+   // most_viewed_collections is simply coll_pid -> count
+    $trending_collections = array();
+    foreach ($most_viewed_collections as $coll_pid=>$views) {
+        $pid = str_replace ('info:fedora/', '', $coll_pid);
+        $obj = islandora_object_load ($pid);
+        //        $label = $obj->label;
+        if ($obj) {
+            $trending_collections[$pid] = array(
+                'label'=>$obj->label,
+                'count'=>$views);
+        }
+    }
+    return theme ('openskydora_trending_items', array(
+        'trending_items' => $trending_collections,
+        'title' => 'Trending Collections',
+        'count' => $items_count,
         'weeks_ago' => $weeks_ago,
     ));
 }
-    
+
 /* opensky_trending_items theme wants
    - $title ("trending items");
    - $trending_objects (array ('pid'=>array($count, $obj)))
@@ -130,21 +169,22 @@ function get_new_archival_items_content() {
 */
 function get_trending_downloads_content() {
     module_load_include('inc', 'openskydora', 'includes/usage_stats');
-    $weeks_ago = 25;
+    //$weeks_ago = 25;
+    $weeks_ago = $GLOBALS['weeks_ago'];
     $items_count = 3;
 
     // get all views and then look for images
     $most_downloaded_items = openskydora_get_most_downloaded($items_count, $weeks_ago);
-    // dsm($most_downloaded_items);
-    $trending_downloads = array();
-    foreach($most_downloaded_items as $pid=>$item) {
 
-        $trending_downloads[$pid] = array(
+    $trending_downloads = array();
+    foreach($most_downloaded_items as $item) {
+
+        $trending_downloads[$item->pid] = array(
             'count'=>$item->downloads,
             'label'=>$item->label
         );
     }
-    
+
     return theme('openskydora_trending_items', array(
         'trending_items' => $trending_downloads,
         'title' => 'Trending Downloads',
@@ -160,7 +200,8 @@ function get_trending_downloads_content() {
 */
 function get_trending_images_content() {
     module_load_include('inc', 'openskydora', 'includes/usage_stats');
-    $weeks_ago = 5;
+    //    $weeks_ago = 5;
+    $weeks_ago = $GLOBALS['weeks_ago'];
     $items_count = 3;
 
     // get all views and then look for images
@@ -200,7 +241,8 @@ function get_trending_images_content() {
 */
 function get_trending_items_content() {
     module_load_include('inc', 'openskydora', 'includes/usage_stats');
-    $weeks_ago = 5;
+    //$weeks_ago = 5;
+    $weeks_ago = $GLOBALS['weeks_ago'];
     $items_count = 3;
     $exclude = array('opensky:root');
     $most_viewed_items = openskydora_get_most_viewed_items(
@@ -226,7 +268,8 @@ function get_trending_items_content() {
 
 function get_most_viewed_items_content() {
     module_load_include('inc', 'openskydora', 'includes/usage_stats');
-    $most_viewed_items_weeks_ago = 25;
+    //$most_viewed_items_weeks_ago = 25;
+    $weeks_ago = $GLOBALS['weeks_ago'];
     $most_viewed_items_count = 5;
 	$exclude = array('opensky:root');
     $most_viewed_items = openskydora_get_most_viewed_items(

@@ -36,6 +36,10 @@ function get_ISO_date_string ($timestamp) {
     return date("Y-m-d\TH:i:s", $timestamp) .'.000Z';
 }
 
+function ISO_to_human_readable($iso_date_string) {
+    return date('Y-m-d', strtotime($iso_date_string));
+}
+
 function openskydora_get_new_images($count=5, $weeks_ago=5) {
     $args = array ('RELS_EXT_hasModel_uri_t'=>'image');
     return openskydora_get_new_items($count, $weeks_ago, $args);
@@ -89,7 +93,7 @@ function openskydora_get_new_items($count=5, $weeks_ago=5, $args=NULL) {
         'sort'=>'fgs_createdDate_dt desc',
         'solrLimit'=>$count,
     );
-  
+    
     $query_results = openskydora_solr_search($query, $params);
 
     $ret = array();
@@ -98,7 +102,7 @@ function openskydora_get_new_items($count=5, $weeks_ago=5, $args=NULL) {
             'pid' => $item['PID'],
             'collection' => $item['RELS_EXT_isMemberOfCollection_uri_s'],
             'label' => $item['fgs_label_s'],
-            'created' => $item['fgs_createdDate_dt'],
+            'created' => ISO_to_human_readable($item['fgs_createdDate_dt']),
             'model' => $item['RELS_EXT_hasModel_uri_s'],
         );
     }
@@ -145,10 +149,20 @@ function openskydora_get_most_viewed_collections($count=5, $weeks_ago=5) {
         $coll_views = isset($most_viewed[$collection]) ? $most_viewed[$collection] : 0;
         $coll_views += intval($views[$pid]->views);
         // dsm ("- $collection coll_views: $coll_views");
+        /*        $most_viewed[$collection] = array (
+            'views' =>$coll_views,
+            'label' => $label
+        );
+        */
         $most_viewed[$collection] = $coll_views;
     }
 
     arsort($most_viewed);
+    /*
+    usort($most_viewed, function ($a, $b) {
+        return $a['views'] <=> $b['views'];
+    });
+    */
     return array_slice($most_viewed, 0, $count, TRUE);
 }
 

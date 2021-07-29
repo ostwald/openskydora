@@ -1,5 +1,12 @@
 <?php
 
+function template_preprocess_openskydora_trending_items(&$variables) {
+    $variables['show_usage_data_count'] = 1;
+}
+
+function template_preprocess_openskydora_new_items(&$variables) {
+    $variables['show_usage_data_date'] = 1;
+}
 
 /**
  * Implements template_preprocess_HOOK().

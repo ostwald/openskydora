@@ -1,6 +1,6 @@
 <?php
 
-//dsm($variables);
+// dsm($variables);
 
 ?>
 
@@ -9,7 +9,9 @@
 <ul>
   <?php foreach ($trending_items as $pid=>$item): ?>
     <li><?php print l($item['label'], "islandora/object/{$pid}"); ?>
- (<?php print $item['count']; ?>)
+	  <?php if (@$show_usage_data_count): ?>
+	    (<?php print $item['count']; ?>)
+	  <?php endif; ?>
 	</li>
   <?php endforeach; ?>
 </ul>
