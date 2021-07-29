@@ -1,5 +1,8 @@
 <?php
 
+define ('OPENSKYDORA_USAGE_WEEKS_AGO', 2);
+define ('OPENSKYDORA_USAGE_SHOW_COUNTS',0);
+
 // Includes functions to create Islandora Solr blocks.
 require_once dirname(__FILE__) . '/includes/blocks.inc';
 require_once dirname(__FILE__) . '/includes/callbacks.inc';

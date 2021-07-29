@@ -1,11 +1,13 @@
 <?php
 
 function template_preprocess_openskydora_trending_items(&$variables) {
-    $variables['show_usage_data_count'] = 1;
+    // $variables['show_usage_data_count'] = 1;
+    $variables['show_usage_data_count'] = OPENSKYDORA_USAGE_SHOW_COUNTS;
 }
 
 function template_preprocess_openskydora_new_items(&$variables) {
-    $variables['show_usage_data_date'] = 1;
+    //$variables['show_usage_data_date'] = 1;
+    $variables['show_usage_data_date'] = OPENSKYDORA_USAGE_SHOW_COUNTS;
 }
 
 /**

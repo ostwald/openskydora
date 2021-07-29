@@ -8,8 +8,7 @@
 // see https://api.drupal.org/api/examples/block_example%21block_example.module/7.x-1.x
 
 global $weeks_ago;
-$GLOBALS['weeks_ago'] = 25;
-define ('OPENSKYDORA_USAGE_WEEKS_AGO', $GLOBALS['weeks_ago']);
+$GLOBALS['weeks_ago'] = OPENSKYDORA_USAGE_WEEKS_AGO;
 
 /**
  * these "info" definitions are necessary to get the blocks on the
@@ -137,7 +136,7 @@ function get_trending_collections_content() {
     module_load_include('inc', 'openskydora', 'includes/usage_stats');
     //$weeks_ago = 25;
     $weeks_ago = $GLOBALS['weeks_ago'];
-    $items_count = 5;
+    $items_count = 6;
 
     $most_viewed_collections = openskydora_get_most_viewed_collections(
         $items_count, $weeks_ago);

@@ -117,8 +117,9 @@ function openskydora_get_most_viewed_collections($count=5, $weeks_ago=5) {
     // get all the views in the window
     $views = openskydora_get_most_viewed (10000, $weeks_ago);
 
-    // dsm($views);
-
+    // Kludge to keep number of pids from blowing up Solr
+    $views = array_slice($views, 0, 100);
+    
     // search for all the unique PIDs that aren't collections
     $query = implode (array_map ('pid_query_clause', array_keys($views)), ' OR ');
     $query = '('.$query.') NOT RELS_EXT_hasModel_uri_t:"*collectionCModel"';
@@ -135,9 +136,8 @@ function openskydora_get_most_viewed_collections($count=5, $weeks_ago=5) {
         'sort'=>'fgs_createdDate_dt desc',
         'solrLimit'=>count($views),
     );
+
     $query_results = openskydora_solr_search($query, $params);
-    // dsm("results");
-    // dsm ($query_results);
 
     // construct most_viewed array to return
     $most_viewed = array();
@@ -185,7 +185,7 @@ function openskydora_get_most_viewed_collections($count=5, $weeks_ago=5) {
  */
 function openskydora_get_most_viewed_items($count, $weeks_ago=7, $exclude=NULL) {
 
-    $records = openskydora_get_most_viewed($count, $weeks_ago, $exclude);
+    $records = openskydora_get_most_viewed($count+20, $weeks_ago, $exclude);
     $item_records = array();  // No collections
     
     // filter out collection citation model
