@@ -1,5 +1,0 @@
-name = Openskydora
-dependencies[] = islandora_solr
-description = This module provides OpenSky functionality.
-core = 7.x
-stylesheets[all][] = css/openskydora.base.css
