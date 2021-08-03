@@ -1,0 +1,9 @@
+name = jlo tools
+description = This module is used for debugging, utilities, and prototyping.
+dependencies[] = block
+
+core = 7.x
+stylesheets[all][] = css/jlo.base.css
+stylesheets[all][] = css/collections.css
+
+configure = admin/config/content/jlo

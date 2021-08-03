@@ -1,0 +1,19 @@
+#wrapper-description {
+	padding:10px 0;
+}
+
+#block-jlo-jlo-wrapper-block input[type='submit'] {
+	font-family:arial;
+	font-size:2.5em;
+
+}
+#block-jlo-jlo-wrapper-block input[type='text'] {
+	font-family:arial;
+	font-size:1.4em;
+	padding:3px;
+}
+.error-msg {
+	border:solid thin red;
+	background-color:pink;
+	padding:10px;
+}

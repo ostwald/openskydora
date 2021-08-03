@@ -1,0 +1,67 @@
+.usage-stats-table {
+/*	border:thin black solid; */
+}
+.usage-stats-table td {
+	border:thin black solid;
+	width:33%;
+	background:#666;
+	padding:10px;
+	height:235px;
+}
+
+	
+.trending-wrapper {
+     /* display:table-cell; */
+    /*     border:thin black solid; */
+
+     font-size:.85em;
+     width:100%;
+     valign:top;
+     color:white;
+     margin:5px;
+}
+
+.trending-wrapper h3 {
+    text-align:center;
+}
+
+.trending-wrapper a {
+     color:white;
+ }
+
+.usage-stats-table {
+     width:900px;
+     margin:auto;
+ }
+
+#trending-items h3 {
+   color:#CD83F8;
+}
+
+#trending-downloads h3 {
+color:#36F03D;
+}
+
+#trending-images h3 {
+color:#6ED1FB
+}
+
+#new-archives-items h3 {
+color:#FFF543;
+}
+
+#trending-collections h3 {
+color:#FC533B;
+}
+
+#image-carousel {
+	width:100%;
+	margin:auto;
+	align:center;
+}
+
+#carousel-image img {
+	margin:15px auto 0 auto;
+	display:block;
+	max-height:200px;
+}

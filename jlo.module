@@ -1,0 +1,325 @@
+<?php
+
+require_once dirname(__FILE__) . '/includes/utilities.inc';
+require_once dirname(__FILE__) . '/includes/collections.inc';
+
+define ('ROOT_PID', 'islandora:root');
+
+/**
+ * Implements hook_meun().
+ */
+function jlo_menu() {
+    $items = array();
+    $items['jlo/coll_item'] = array(
+        'title' => 'OpenSky Collection Item',
+        'page callback' => 'get_jlo_collection',
+        'access arguments' => array('access content'),
+    );
+    $items['jlo/get/collection'] = array(
+        'title' => 'endpoint for collection json',
+        'page callback' => 'get_jlo_collection_json',
+        'access arguments' => array('access content'),
+    );
+    $items['jlo/get/collections'] = array(
+        'title' => 'endpoint for collection jsn',
+        'page callback' => 'get_jlo_collections_json',
+        'access arguments' => array('access content'),
+    );
+
+    $items['admin/config/system/jlo'] = array(
+        'title' => 'JLO',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array ('jlo_config_form'),
+        'access arguments' => array('access administration pages'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+    return $items;
+}
+/**
+ * Implements hook_help().
+ */
+function jlo_help($path, $arg) {
+
+    if ($path == 'admin/help#jlo') {
+        $output = '<h3>' . t('About') . '</h3>';
+        $output .= '<p>' . t('The Jlo module is for trying things out and other developery stuff.') . '</p>';
+        return $output;
+    }
+}
+
+
+/**
+ * these "info" definitions are necessary to get the blocks on the blocks UI
+ * page
+ */
+function jlo_block_info() {
+    $blocks = array();
+    $blocks['jlo_wrapper_block'] = array (
+        'info' => t('Jlo wrapper block'),
+    );
+    $blocks['jlo_checksums_wrapper_block'] = array (
+        'info' => t('Jlo Checksums wrapper block'),
+    );
+    $blocks['jlo_checksum_input_block'] = array (
+        'info' => t('Jlo Input Block'),
+    );
+    $blocks['jlo_collections_block'] = array (
+        'info' => t('Jlo Collections Block'),
+    );
+    $blocks['jlo_collection_block'] = array (
+        'info' => t('Jlo Collection Block'),
+    );
+    $blocks ['jlo_home_page'] = array (
+        'info' => t('JLO OpenSkydora Home page'),
+    );
+    $blocks ['jlo_home_mockup'] = array (
+        'info' => t('JLO Home Page Mockup'),
+    );
+    return $blocks;
+}
+
+
+/**
+ * implements hook_block_view
+ *
+ * OpenSky Blocks
+ */
+function jlo_block_view($delta = '') {
+    $block = array();
+    switch ($delta) {
+    case 'jlo_wrapper_block':
+        $block['subject'] = t('Jlo Wrapper Block');
+        $block['content'] = get_jlo_wrapper();
+        break;
+    case 'jlo_checksums_wrapper_block':
+        $block['subject'] = t('Jlo Checksums Wrapper Block');
+        $block['content'] = get_jlo_checksums_wrapper();
+        break;
+    case 'jlo_checksum_input_block':
+        $block['subject'] = t('Jlo Input Block');
+        $block['content'] = drupal_get_form('jlo_checksum_input_form');
+        break;
+    case 'jlo_checksum_results_block':
+        $block['subject'] = t('Jlo Info Block');
+        $block['content'] = get_jlo_checksum_results();
+        break;
+    case 'jlo_collections_block':
+        $block['subject'] = t('Jlo Collections Block');
+        $block['content'] = get_jlo_collections();
+        break;
+    case 'jlo_collection_block':
+        $block['subject'] = t('Jlo Collections Block');
+        //$block['content'] = get_jlo_collection();
+        $block['content'] = 'hello world';
+        break;
+    case 'jlo_home_page':
+        $block['subject'] = t('Openskydora Home Page');
+        $block['content'] = theme('jlo_home_page', array(
+            'option_data' => array(),
+        ));
+        break;
+    case 'jlo_home_mockup':
+        $block['subject'] = t('JLO Home Mockup');
+        $block['content'] = theme('jlo_home_mockup', array(
+            'option_data' => array(),
+        ));
+        break;
+    }
+    return $block;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function jlo_theme () {
+    $path = drupal_get_path('module', 'jlo');
+    $file = 'theme.inc';
+    return array (
+        'jlo_wrapper' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'jlo-wrapper',
+            'variables' => array ('fooberry' => NULL),
+        ),
+        'jlo_checksums_wrapper' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'jlo-checksums-wrapper',
+            'variables' => array ('fooberry' => NULL),
+        ),
+        'jlo_checksum_results' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'jlo-checksum-results',
+        ),
+        'jlo_collections' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'jlo-collections',
+        ),
+        'jlo_collection' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'jlo-collection',
+            'variables' => array ('pid' => NULL),
+        ),
+        'jlo_home_page' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'jlo-home-page',
+            'variables' => array (
+                'option_data' => NULL,
+            ),
+        ),
+        'jlo_home_mockup' => array (
+            'path' => $path . '/theme',
+            'file' => $file,
+            'template' => 'jlo-home-mockup',
+            'variables' => array (
+                'option_data' => NULL,
+            ),
+        ),
+        
+    );
+}
+
+
+function get_jlo_wrapper() {
+    $pid = isset($_GET['pid']) ? $_GET['pid'] : '';
+
+    $output = theme('jlo_wrapper', array(
+        'param_name' => 'param_val',
+        'pid' => $pid
+    ));
+    return $output;
+}
+function get_jlo_checksums_wrapper() {
+    $pid = isset($_GET['pid']) ? $_GET['pid'] : '';
+
+    $output = theme('jlo_checksums_wrapper', array(
+        'param_name' => 'param_val',
+        'pid' => $pid
+    ));
+    return $output;
+}
+
+function get_jlo_collections() {
+    $output = theme('jlo_collections', array());
+    return $output;
+}
+function get_jlo_collection() {
+
+    $pid = $_GET['pid'];
+    $output = theme('jlo_collection', array(
+        'pid'=>$pid
+    ));
+    return $output;
+}
+
+function render_collection($pid) {
+    return  theme('jlo_collection', array(
+        'pid'=>$pid
+    ));
+}
+
+
+
+/**
+ * Form constructor for NLDR Search
+ */
+function jlo_checksum_input_form($form_state, $delta) {
+
+    $js_path = drupal_get_path('module','jlo') . '/js';
+
+    $form['#method'] = 'post';
+
+    // Search term
+    $form['pid'] = array(
+        '#type' => 'textfield',
+        //        '#title' => t('PID'),
+        '#size' => 30,
+        '#maxlength' => 255,
+        '#attributes' => array (
+            'placeholder' => t('enter Pid'),
+        ),
+    );
+    
+    $options = array ('object', 'collection');
+
+    $form['scope'] = array (
+        '#description' => t('Select whether you would like to set checksums on an object or a collection'),
+        '#type' => 'radios',
+        '#title' => t('Level'),
+        '#options' => $options,
+
+        '#default_value' => $options[0],
+    );
+
+    $form['submit'] = array(
+        '#type' => 'submit',
+        '#value' => t('Go'),
+    );
+
+    return $form;
+}
+
+function jlo_checksum_input_form_submit($form, &$form_state) {
+
+    // show the form_state for debugging
+    dsm($form_state);
+
+    // get a value from the form
+    $pid = $form_state['values']['pid'];
+    $scope_options = $form_state['complete form']['scope']['#options'];
+    $scope = $scope_options[$form_state['values']['scope']];
+
+    // pass in the params for the redirectURL
+    $options = array('query' => array (
+        'command' => 'checksum',
+        'pid' => $pid,
+        'scope' => $scope,
+    ));
+    drupal_goto ('node/6', $options);
+    return;
+}
+
+function get_jlo_checksum_results () {
+    $output = theme ('jlo_checksum_results', array());
+    return $output;
+}
+
+function get_jlo_collection_json () {
+    $pid = $_GET['pid'];
+    $jlo_collection = jlo_collections_get_collection ($pid);
+    dsm ($jlo_collection);
+    drupal_json_output(array('status' => 0, 'data' => $jlo_collection));
+}
+function get_jlo_collections_json () {
+
+    $jlo_collections = jlo_collections_get_collections();
+    drupal_json_output(array('status' => 0, 'data' => $jlo_collections));        
+}
+
+function jlo_config_form ($form, &$form_state) {
+    $form['jlo_ga_id'] = array (
+        '#type' => 'textfield',
+        '#title' => t('Google Analytics ID'),
+        '#default_value' => variable_get('jlo_ga_id', ''),
+        '#size' => 14,
+        '#maxlength' => 20,
+        '#description' => t('The Google Analytics ID.'),
+        '#required' => TRUE,
+    );
+
+    $form['image_carousel_pids'] = array (
+        '#type' => 'textarea',
+        '#title' => t('Image Carousel PIDs'),
+        '#default_value' => variable_get('image_carousel_pids', ''),
+        '#cols' => 20,
+        '#rows' => 5,
+        '#description' => t('PIDs for the records whose images are displayed in carousel. 1 value per line.'),
+        '#required' => FALSE,
+    );
+    
+    return system_settings_form($form);
+}
