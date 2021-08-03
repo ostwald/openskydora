@@ -75,7 +75,7 @@ function get_openskydora_kuali_award_info ($award_id, $match_criterion="SMART_PA
 }
 
 /*
- * Returns single Kuali API result for provided award_id if possible, null otherwise.
+ * Returns single match (a Kuali API result) for provided award_id if possible, null otherwise.
  *
  * kuali_resp is response from API, which may include several candidates (Kuali
  * API matches against 5 righTmost characters of award_id). This function must
@@ -149,21 +149,35 @@ function parse_kuali_award_info ($award_id, $kuali_resp, $match_criterion="SMART
 
 /*
  * returns kauli response for proviced $award_id as object or array
+
+ * skip_ids (which are not resolved) are defined via configuration as
+ * 'kuali_skip_ids'.
  */
 function get_kuali_response($award_id) {
 
-    if (variable_get('islandora_repository_pid') == 'islandora:root') {
-        $skip_award_ids = array();
-    } else {
-        $skip_award_ids = array(
-              '01830',
-              '99999',
-        );
-    }
+    // sometime we want to disable the skip_awards_id mechanism on
+    // stage for testing purposes...
+    $is_stage_instance = variable_get('islandora_repository_pid') == 'islandora:root';
+    $strict = FALSE;  // when TRUE, the stage instance will refuse to
+                      // resolve skipped ids, just like production
+    
+    $skip_award_ids = array_map (
+        function ($a) {
+            return trim($a);
+        },
+        explode("\n", variable_get('kuali_skip_ids', ''))
+    );
+    
 
-    // we do not provide kuali info for skipped award ids                                                                    
+    // we do not provide kuali info for skipped award ids
     if (in_array (strtoupper($award_id), $skip_award_ids)) {
-        return null;
+        if ($is_stage_instance && !$strict) {
+            $msg = "$award_id is a skip_award_id - as such it is not even submmitted to Kuali.\n";
+            $msg .= "The Kuali API Response below is shown for debugging purposes only.";
+            drupal_set_message ($msg, 'warning');
+        } else {
+            return null;
+        }
     }
 
     $base_url = 'https://www.fin.ucar.edu/kualiapi/awardsbysponsorawardid';
